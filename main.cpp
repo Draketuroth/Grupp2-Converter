@@ -43,7 +43,9 @@ FBXConverter Converter;
 
 int main() {
 
-	Converter.LoadFBXFormat("FbxModel\\walk.fbx");
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// Memory leak detection flag
+
+	Converter.Load("FbxModel\\cubes.fbx");
 	
 	getchar();
 	

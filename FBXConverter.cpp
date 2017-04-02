@@ -19,19 +19,37 @@ FBXConverter::~FBXConverter() {
 
 void FBXConverter::ReleaseAll() {
 
+	gFbxSdkManager->Destroy();
+}
 
+bool FBXConverter::Load(const char *fileName) {
+
+	if (!LoadFBXFormat(fileName)) {
+
+		cout << "\nFailed to load the FBX format. Press Enter to quit" << endl;
+
+		return false;
+	}
+
+	if (!LoadMeshes()) {
+
+		cout << "\nFailed to meshes from the FBX format. Press Enter to quit" << endl;
+	}
+
+	ReleaseAll();
+
+	return true;
 }
 
 bool FBXConverter::LoadFBXFormat(const char *fileName) {
 
 	cout << "#----------------------------------------------------------------------------\n"
+		"# STEP 1: LOADING THE FILE\n"
+		"#\n"
 		"# FILEPATH: " << fileName <<"\n"
 		"#----------------------------------------------------------------------------\n" << endl;
 
 	bool bSuccess;
-
-	// Data parsing file declaration
-	ofstream outputFormat;
 
 	// Storing a pointer for the FBX Manager
 	gFbxSdkManager = nullptr;
@@ -90,9 +108,72 @@ bool FBXConverter::LoadFBXFormat(const char *fileName) {
 
 	pFbxRootNode = pFbxScene->GetRootNode();
 
-	cout << "[OK] FBX file node succesfully received!\n\n[OK] Properties of the FBX can now be accessed from the rootnode" << endl;
-
-	gFbxSdkManager->Destroy();
+	cout << "[OK] FBX file root node succesfully received!\n\n[OK] Properties of the FBX can now be accessed from the root node" << endl;
 	
 	return true;
+}
+
+bool FBXConverter::LoadMeshes() {
+
+	cout << "\n#----------------------------------------------------------------------------\n"
+		"# STEP 2: LOADING THE MESHES AND VERTICES\n"
+		"#----------------------------------------------------------------------------\n" << endl;
+
+	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
+
+		Mesh currentMesh;
+
+		FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);	// Current child being processed in the file
+
+		if (pFbxChildNode->GetNodeAttribute() == NULL) {
+
+			continue;
+		}
+
+		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
+
+		if (AttributeType != FbxNodeAttribute::eMesh) {
+
+			continue;
+		}
+
+		currentMesh.mesh = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
+
+		ProcessControlPoints(currentMesh);
+
+		meshes.push_back(currentMesh);
+
+	}
+
+	cout << "[OK] Found " << meshes.size() << " mesh(es) in the format\n";
+
+	for (int i = 0; i < meshes.size(); i++) {
+
+		cout << "Mesh " << i << " has " << meshes[i].controlPoints.size() << " vertices\n";
+	}
+
+	return true;
+}
+
+void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
+
+	unsigned int controlPointCount = pMesh.mesh->GetControlPointsCount();	// Store the total amount of control points
+
+	// Loop through all vertices and create individual controlpoints that are store in the control points vector
+
+	for (unsigned int i = 0; i < controlPointCount; i++) {
+
+		ControlPoint* currentControlPoint = new ControlPoint();
+		XMFLOAT3 position;
+		position.x = static_cast<float>(pMesh.mesh->GetControlPointAt(i).mData[0]);
+
+		position.y = static_cast<float>(pMesh.mesh->GetControlPointAt(i).mData[1]);
+
+		position.z = static_cast<float>(pMesh.mesh->GetControlPointAt(i).mData[2]);
+
+		currentControlPoint->Position = position;
+		pMesh.controlPoints[i] = currentControlPoint;
+
+		delete currentControlPoint;
+	}
 }

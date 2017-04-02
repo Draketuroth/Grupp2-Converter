@@ -12,6 +12,8 @@
 
 #include <fbxsdk.h>
 
+#include "Datatypes.h"
+
 using namespace std;
 using namespace DirectX;
 
@@ -24,7 +26,10 @@ public:
 
 	void ReleaseAll();
 
+	bool Load(const char *fileName);
 	bool LoadFBXFormat(const char *fileName);
+	bool LoadMeshes();
+	void ProcessControlPoints(Mesh &pMesh);
 
 private:
 
@@ -35,6 +40,9 @@ private:
 	FbxScene* pFbxScene;
 
 	FbxNode* pFbxRootNode;
+
+	vector<Mesh> meshes;
+	unordered_map<unsigned int, ControlPoint*>controlPoints;
 
 };
 

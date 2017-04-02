@@ -26,5 +26,8 @@
     <ClInclude Include="FBXConverter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Datatypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
