@@ -1,11 +1,13 @@
 
 // This is required to link DirectX from the Windows SDK
-
 #include <d3d11.h>	
 #include <d3dcompiler.h>	
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
+
+// For some strange reason, DirectXMath must be included in order to find the namespace "DirectX"
+#include <DirectXMath.h>
 
 // The core header file of the FBX SDK
 #include <fbxsdk.h>
@@ -14,7 +16,12 @@
 #include <istream>
 #include <ostream>
 
-// In order to link FBX SDK, do the following steps:
+// The FBX Converter used to create custom format
+#include "FBXConverter.h"
+
+//----------------------------------------------------------------------------------------------------------------------------------//
+// HOW TO LINK THE FBX SDK
+//----------------------------------------------------------------------------------------------------------------------------------//
 
 // 1. In Properties -> General, set Character Set to "Unicode" to use DirectX wstrings
 
@@ -29,10 +36,17 @@
 
 // 6. In Properties -> Linker -> Input, add "libfbxsdk.lib" to Additional Dependencies
 
+using namespace DirectX;
 using namespace std;
+
+FBXConverter Converter;
 
 int main() {
 
+	Converter.LoadFBXFormat("FbxModel\\walk.fbx");
+	
+	getchar();
+	
 	return 0;
 }
 
