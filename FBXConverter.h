@@ -28,7 +28,7 @@ public:
 
 	bool Load(const char *fileName);
 	bool LoadFBXFormat(const char *fileName);
-	bool LoadMeshes();
+	void LoadMeshes();
 	void ProcessControlPoints(Mesh &pMesh);
 
 private:

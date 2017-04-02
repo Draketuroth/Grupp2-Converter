@@ -24,6 +24,8 @@ void FBXConverter::ReleaseAll() {
 
 bool FBXConverter::Load(const char *fileName) {
 
+	// Check if the FBX file was loaded properly
+
 	if (!LoadFBXFormat(fileName)) {
 
 		cout << "\nFailed to load the FBX format. Press Enter to quit" << endl;
@@ -31,10 +33,11 @@ bool FBXConverter::Load(const char *fileName) {
 		return false;
 	}
 
-	if (!LoadMeshes()) {
+	// Loading the meshes
 
-		cout << "\nFailed to meshes from the FBX format. Press Enter to quit" << endl;
-	}
+	LoadMeshes();
+
+	// Release components and destroy the FBX SDK manager
 
 	ReleaseAll();
 
@@ -113,7 +116,7 @@ bool FBXConverter::LoadFBXFormat(const char *fileName) {
 	return true;
 }
 
-bool FBXConverter::LoadMeshes() {
+void FBXConverter::LoadMeshes() {
 
 	cout << "\n#----------------------------------------------------------------------------\n"
 		"# STEP 2: LOADING THE MESHES AND VERTICES\n"
@@ -151,8 +154,6 @@ bool FBXConverter::LoadMeshes() {
 
 		cout << "Mesh " << i << " has " << meshes[i].controlPoints.size() << " vertices\n";
 	}
-
-	return true;
 }
 
 void FBXConverter::ProcessControlPoints(Mesh &pMesh) {

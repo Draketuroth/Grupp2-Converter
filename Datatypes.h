@@ -90,7 +90,7 @@ struct ControlPoint { // Resembles a physical vertex point in the FBX SDK
 
 };
 
-struct Mesh {
+struct Mesh { // Extended node type to hold both the FBX mesh node and its vertices
 
 	FbxMesh* mesh;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
