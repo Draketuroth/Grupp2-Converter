@@ -149,6 +149,15 @@ void FBXConverter::LoadMeshes() {
 		}
 
 		currentMesh.meshNode = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
+		currentMesh.name = currentMesh.meshNode->GetNode()->GetName();
+
+		currentMesh.position.x = (float)currentMesh.meshNode->GetNode()->LclTranslation.Get().mData[0];
+		currentMesh.position.y = (float)currentMesh.meshNode->GetNode()->LclTranslation.Get().mData[1];
+		currentMesh.position.z = (float)currentMesh.meshNode->GetNode()->LclTranslation.Get().mData[2];
+
+		currentMesh.rotation.x = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[0];
+		currentMesh.rotation.y = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[1];
+		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 
 		ProcessControlPoints(currentMesh);
 
@@ -156,12 +165,23 @@ void FBXConverter::LoadMeshes() {
 
 	}
 
-	cout << "[OK] Found " << meshes.size() << " mesh(es) in the format\n";
+	cout << "[OK] Found " << meshes.size() << " mesh(es) in the format\n\n";
 
 	for (int i = 0; i < meshes.size(); i++) {
 
-		cout << "[OK] Mesh " << i + 1 << " has " << meshes[i].controlPoints.size() << " vertices\n";
-		CheckSkeleton(meshes[i]);
+		cout << "\n-------------------------------------------------------\n"
+			<< "Mesh " << i + 1 <<
+			"\n-------------------------------------------------------\nName: "
+			<< meshes[i].name << "\nPosition: {"
+			<< meshes[i].position.x << ", "
+			<< meshes[i].position.y << ", "
+			<< meshes[i].position.z << "}\nRotation: {"
+			<< meshes[i].rotation.x << ", "
+			<< meshes[i].rotation.y << ", "
+			<< meshes[i].rotation.z << "}\nVertices: "
+			<< meshes[i].controlPoints.size() << "\n\n";
+		
+			CheckSkeleton(meshes[i]);
 	}
 }
 
@@ -189,18 +209,26 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 }
 
 void FBXConverter::CheckSkeleton(Mesh &pMesh) {
-
+	
 	unsigned int deformerCount = pMesh.meshNode->GetDeformerCount();
-
+	
 	if (deformerCount > 0) {
 
-		cout << "[OK] Found a joint hierarchy attached to the current mesh\n\n";
+		cout << "[OK] Found a joint hierarchy attached to " << pMesh.name << "\n";
+
+		/*for (unsigned int deformerIndex = 0; deformerIndex < deformerCount; deformerIndex++) {
+
+			FbxSkin* currentSkin = reinterpret_cast<FbxSkin*>(pMesh.meshNode->GetDeformer(deformerIndex, FbxDeformer::eSkin));
+
+
+
+		}*/
 
 	}
 
 	else {
 
-		cout << "[NO CONTENT] No hierarchy was attached to the current mesh\n\n";
+		cout << "[NO CONTENT] No hierarchy was attached to " << pMesh.name << "\n";;
 	}
 }
 
@@ -230,35 +258,93 @@ void FBXConverter::LoadLights() {
 
 		currentLight.lightNode = (FbxLight*)pFbxChildNode->GetNodeAttribute();
 
+		currentLight.name = currentLight.lightNode->GetNode()->GetName();
+
+		currentLight.color.x = (float)currentLight.lightNode->Color.Get().mData[0];
+		currentLight.color.y = (float)currentLight.lightNode->Color.Get().mData[1];
+		currentLight.color.z = (float)currentLight.lightNode->Color.Get().mData[2];
+
+		currentLight.position.x = (float)currentLight.lightNode->GetNode()->LclTranslation.Get().mData[0];
+		currentLight.position.y = (float)currentLight.lightNode->GetNode()->LclTranslation.Get().mData[1];
+		currentLight.position.z = (float)currentLight.lightNode->GetNode()->LclTranslation.Get().mData[2];
+
 		lights.push_back(currentLight);
 	}
 
 	if(lights.size() > 0){
 
-	cout << "[OK] Found " << lights.size() << " lights in the format\n";
+		cout << "[OK] Found " << lights.size() << " lights in the format\n\n";
 
-	for (int i = 0; i < lights.size(); i++) {
+		for (int i = 0; i < lights.size(); i++) {
 
-		if (lights[i].lightNode->LightType.Get() == FbxLight::ePoint) {
+			if (lights[i].lightNode->LightType.Get() == FbxLight::ePoint) {
 
-			cout << "Light " << i + 1 << " was a Point Light\n";
+				cout << "\n-----------------------------------------\n"
+					<< "Light " << i + 1 <<
+					"\n-----------------------------------------\n"
+					<< "Name; " << lights[i].name << "\n"
+					"Type: Point\n"
+					"Color: {"
+					<< lights[i].color.x << ", "
+					<< lights[i].color.y << ", "
+					<< lights[i].color.z << "}\n"
+					"Position: {"
+					<< lights[i].position.x << ", "
+					<< lights[i].position.y << ", "
+					<< lights[i].position.z << "}\n\n";
+			}
+
+			if (lights[i].lightNode->LightType.Get() == FbxLight::eSpot) {
+
+				cout << "\n-----------------------------------------\n"
+					<< "Light " << i + 1 <<
+					"\n-----------------------------------------\n"
+					<< "Name; " << lights[i].name << "\n"
+					"Type: Spot\n"
+					"Color: {"
+					<< lights[i].color.x << ", "
+					<< lights[i].color.y << ", "
+					<< lights[i].color.z << "}\n"
+					"Position: {"
+					<< lights[i].position.x << ", "
+					<< lights[i].position.y << ", "
+					<< lights[i].position.z << "}\n\n";
+			}
+
+			if (lights[i].lightNode->LightType.Get() == FbxLight::eArea) {
+
+				cout << "\n-----------------------------------------\n"
+					<< "Light " << i + 1 <<
+					"\n-----------------------------------------\n"
+					<< "Name; " << lights[i].name << "\n"
+					"Type: Area\n"
+					"Color: {"
+					<< lights[i].color.x << ", "
+					<< lights[i].color.y << ", "
+					<< lights[i].color.z << "}\n"
+					"Position: {"
+					<< lights[i].position.x << ", "
+					<< lights[i].position.y << ", "
+					<< lights[i].position.z << "}\n\n";
+			}
+
+			if (lights[i].lightNode->LightType.Get() == FbxLight::eDirectional) {
+
+				cout << "\n-----------------------------------------\n"
+					<< "Light " << i + 1 <<
+					"\n-----------------------------------------\n"
+					<< "Name; " << lights[i].name << "\n"
+					"Type: Directional\n"
+					"Color: {"
+					<< lights[i].color.x << ", "
+					<< lights[i].color.y << ", "
+					<< lights[i].color.z << "}\n"
+					"Position: {"
+					<< lights[i].position.x << ", "
+					<< lights[i].position.y << ", "
+					<< lights[i].position.z << "}\n\n";
+			}
 		}
-
-		if (lights[i].lightNode->LightType.Get() == FbxLight::eSpot) {
-
-			cout << "Light " << i + 1 << " was a Spot Light\n";
-		}
-
-		if (lights[i].lightNode->LightType.Get() == FbxLight::eArea) {
-
-			cout << "Light " << i + 1 << " was a Area Light\n";
-		}
-
-		if (lights[i].lightNode->LightType.Get() == FbxLight::eDirectional) {
-
-			cout << "Light " << i + 1 << " was a Directional Light\n";
-		}
-	}
 
 	}
 
@@ -295,12 +381,37 @@ void FBXConverter::LoadCameras() {
 
 		currentCamera.cameraNode = (FbxCamera*)pFbxChildNode->GetNodeAttribute();
 
+		currentCamera.name = currentCamera.cameraNode->GetNode()->GetName();
+
+		currentCamera.position.x = (float)currentCamera.cameraNode->GetNode()->LclTranslation.Get().mData[0];
+		currentCamera.position.y = (float)currentCamera.cameraNode->GetNode()->LclTranslation.Get().mData[1];
+		currentCamera.position.z = (float)currentCamera.cameraNode->GetNode()->LclTranslation.Get().mData[2];
+
+		currentCamera.rotation.x = (float)currentCamera.cameraNode->GetNode()->LclRotation.Get().mData[0];
+		currentCamera.rotation.y = (float)currentCamera.cameraNode->GetNode()->LclRotation.Get().mData[1];
+		currentCamera.rotation.z = (float)currentCamera.cameraNode->GetNode()->LclRotation.Get().mData[2];
+
 		cameras.push_back(currentCamera);
 	}
 
 	if (cameras.size() > 0) {
 
-		cout << "[OK] Found " << cameras.size() << " camera(s) in the format\n";
+		cout << "[OK] Found " << cameras.size() << " camera(s) in the format\n\n";
+
+		for (int i = 0; i < cameras.size(); i++) {
+				
+			cout << "\n-----------------------------------------\n"
+				<< "Camera " << i + 1 <<
+				"\n-----------------------------------------\n"
+
+				<< "Name: " << cameras[i].name << "\nPosition: {"
+				<< cameras[i].position.x << ", "
+				<< cameras[i].position.y << ", "
+				<< cameras[i].position.z << "}\nRotation: {"
+				<< cameras[i].rotation.x << ", "
+				<< cameras[i].rotation.y << ", "
+				<< cameras[i].rotation.z << "}\n\n";
+		}
 
 	}
 

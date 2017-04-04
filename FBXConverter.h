@@ -50,7 +50,6 @@ private:
 	vector<Mesh> meshes;
 	vector<Light> lights;
 	vector<Camera> cameras;
-	unordered_map<unsigned int, ControlPoint*>controlPoints;
 
 };
 

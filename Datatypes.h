@@ -100,6 +100,9 @@ struct Skeleton { // Stores every joint in the skeleton hierarchy from the loade
 struct Mesh { // Extended node type to hold both the FBX mesh node and its vertices
 
 	FbxMesh* meshNode;
+	const char* name;
+	XMFLOAT3 position;
+	XMFLOAT3 rotation;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
 	Skeleton skeleton;
 
@@ -108,11 +111,17 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 struct Light {
 
 	FbxLight* lightNode;
+	const char* name;
+	XMFLOAT3 color;
+	XMFLOAT3 position;
 };
 
 struct Camera {
 
 	FbxCamera* cameraNode;
+	const char* name;
+	XMFLOAT3 position;
+	XMFLOAT3 rotation;
 };
 
 #endif DATATYPES_H
