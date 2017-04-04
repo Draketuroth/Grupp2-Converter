@@ -37,6 +37,14 @@ bool FBXConverter::Load(const char *fileName) {
 
 	LoadMeshes();
 
+	// Loading the lights
+
+	LoadLights();
+
+	// Loading the cameras
+
+	LoadCameras();
+
 	// Release components and destroy the FBX SDK manager
 
 	ReleaseAll();
@@ -140,7 +148,7 @@ void FBXConverter::LoadMeshes() {
 			continue;
 		}
 
-		currentMesh.mesh = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
+		currentMesh.meshNode = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
 
 		ProcessControlPoints(currentMesh);
 
@@ -152,13 +160,13 @@ void FBXConverter::LoadMeshes() {
 
 	for (int i = 0; i < meshes.size(); i++) {
 
-		cout << "Mesh " << i << " has " << meshes[i].controlPoints.size() << " vertices\n";
+		cout << "Mesh " << i + 1 << " has " << meshes[i].controlPoints.size() << " vertices\n";
 	}
 }
 
 void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 
-	unsigned int controlPointCount = pMesh.mesh->GetControlPointsCount();	// Store the total amount of control points
+	unsigned int controlPointCount = pMesh.meshNode->GetControlPointsCount();	// Store the total amount of control points
 
 	// Loop through all vertices and create individual controlpoints that are store in the control points vector
 
@@ -166,15 +174,122 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 
 		ControlPoint* currentControlPoint = new ControlPoint();
 		XMFLOAT3 position;
-		position.x = static_cast<float>(pMesh.mesh->GetControlPointAt(i).mData[0]);
+		position.x = static_cast<float>(pMesh.meshNode->GetControlPointAt(i).mData[0]);
 
-		position.y = static_cast<float>(pMesh.mesh->GetControlPointAt(i).mData[1]);
+		position.y = static_cast<float>(pMesh.meshNode->GetControlPointAt(i).mData[1]);
 
-		position.z = static_cast<float>(pMesh.mesh->GetControlPointAt(i).mData[2]);
+		position.z = static_cast<float>(pMesh.meshNode->GetControlPointAt(i).mData[2]);
 
 		currentControlPoint->Position = position;
 		pMesh.controlPoints[i] = currentControlPoint;
 
 		delete currentControlPoint;
 	}
+}
+
+void FBXConverter::LoadLights() {
+
+	cout << "\n#----------------------------------------------------------------------------\n"
+		"# STEP 4: LOADING THE LIGHTS\n"
+		"#----------------------------------------------------------------------------\n" << endl;
+
+	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
+
+		Light currentLight;
+
+		FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);	// Current child being processed in the file
+
+		if (pFbxChildNode->GetNodeAttribute() == NULL) {
+
+			continue;
+		}
+
+		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
+
+		if (AttributeType != FbxNodeAttribute::eLight) {
+
+			continue;
+		}
+
+		currentLight.lightNode = (FbxLight*)pFbxChildNode->GetNodeAttribute();
+
+		lights.push_back(currentLight);
+	}
+
+	if(lights.size() > 0){
+
+	cout << "[OK] Found " << lights.size() << " lights in the format\n";
+
+	for (int i = 0; i < lights.size(); i++) {
+
+		if (lights[i].lightNode->LightType.Get() == FbxLight::ePoint) {
+
+			cout << "Light " << i + 1 << " was a Point Light\n";
+		}
+
+		if (lights[i].lightNode->LightType.Get() == FbxLight::eSpot) {
+
+			cout << "Light " << i + 1 << " was a Spot Light\n";
+		}
+
+		if (lights[i].lightNode->LightType.Get() == FbxLight::eArea) {
+
+			cout << "Light " << i + 1 << " was a Area Light\n";
+		}
+
+		if (lights[i].lightNode->LightType.Get() == FbxLight::eDirectional) {
+
+			cout << "Light " << i + 1 << " was a Directional Light\n";
+		}
+	}
+
+	}
+
+	else {
+
+		cout << "[NO CONTENT FOUND] No lights were found in the scene";
+	}
+
+}
+
+void FBXConverter::LoadCameras() {
+
+	cout << "\n#----------------------------------------------------------------------------\n"
+		"# STEP 5: LOADING THE CAMERAS\n"
+		"#----------------------------------------------------------------------------\n" << endl;
+
+	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
+
+		Camera currentCamera;
+
+		FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);	// Current child being processed in the file
+
+		if (pFbxChildNode->GetNodeAttribute() == NULL) {
+
+			continue;
+		}
+
+		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
+
+		if (AttributeType != FbxNodeAttribute::eCamera) {
+
+			continue;
+		}
+
+		currentCamera.cameraNode = (FbxCamera*)pFbxChildNode->GetNodeAttribute();
+
+		cameras.push_back(currentCamera);
+	}
+
+	if (cameras.size() > 0) {
+
+		cout << "[OK] Found " << cameras.size() << " cameras in the format\n";
+
+	}
+
+	else {
+
+		cout << "[NO CONTENT FOUND] No cameras were found in the scene";
+	}
+
 }

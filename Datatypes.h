@@ -92,7 +92,7 @@ struct ControlPoint { // Resembles a physical vertex point in the FBX SDK
 
 struct Mesh { // Extended node type to hold both the FBX mesh node and its vertices
 
-	FbxMesh* mesh;
+	FbxMesh* meshNode;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
 
 };
@@ -102,6 +102,16 @@ struct Skeleton { // Stores every joint in the skeleton hierarchy from the loade
 	vector<Joint> hierarchy;
 	int hierarchyDepth;
 
+};
+
+struct Light {
+
+	FbxLight* lightNode;
+};
+
+struct Camera {
+
+	FbxCamera* cameraNode;
 };
 
 #endif DATATYPES_H

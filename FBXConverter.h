@@ -27,9 +27,14 @@ public:
 	void ReleaseAll();
 
 	bool Load(const char *fileName);
+
 	bool LoadFBXFormat(const char *fileName);
+
 	void LoadMeshes();
 	void ProcessControlPoints(Mesh &pMesh);
+
+	void LoadLights();
+	void LoadCameras();
 
 private:
 
@@ -42,6 +47,8 @@ private:
 	FbxNode* pFbxRootNode;
 
 	vector<Mesh> meshes;
+	vector<Light> lights;
+	vector<Camera> cameras;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
 
 };
