@@ -160,7 +160,8 @@ void FBXConverter::LoadMeshes() {
 
 	for (int i = 0; i < meshes.size(); i++) {
 
-		cout << "Mesh " << i + 1 << " has " << meshes[i].controlPoints.size() << " vertices\n";
+		cout << "[OK] Mesh " << i + 1 << " has " << meshes[i].controlPoints.size() << " vertices\n";
+		CheckSkeleton(meshes[i]);
 	}
 }
 
@@ -184,6 +185,22 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 		pMesh.controlPoints[i] = currentControlPoint;
 
 		delete currentControlPoint;
+	}
+}
+
+void FBXConverter::CheckSkeleton(Mesh &pMesh) {
+
+	unsigned int deformerCount = pMesh.meshNode->GetDeformerCount();
+
+	if (deformerCount > 0) {
+
+		cout << "[OK] Found a joint hierarchy attached to the current mesh\n\n";
+
+	}
+
+	else {
+
+		cout << "[NO CONTENT] No hierarchy was attached to the current mesh\n\n";
 	}
 }
 
@@ -283,7 +300,7 @@ void FBXConverter::LoadCameras() {
 
 	if (cameras.size() > 0) {
 
-		cout << "[OK] Found " << cameras.size() << " cameras in the format\n";
+		cout << "[OK] Found " << cameras.size() << " camera(s) in the format\n";
 
 	}
 
