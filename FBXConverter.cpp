@@ -119,7 +119,7 @@ bool FBXConverter::LoadFBXFormat(const char *fileName) {
 
 	pFbxRootNode = pFbxScene->GetRootNode();
 
-	cout << "[OK] FBX file root node succesfully received!\n\n[OK] Properties of the FBX can now be accessed from the root node" << endl;
+	cout << "[OK] FBX file root node succesfully received!\n\n[OK] Properties of the FBX file can now be accessed from the root node" << endl;
 	
 	return true;
 }
