@@ -165,7 +165,9 @@ void FBXConverter::LoadMeshes() {
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 		
 		// the scale of the current mech
-		currentMesh.mechScale = currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
+		currentMesh.mechScale.x = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
+		currentMesh.mechScale.y = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[1];
+		currentMesh.mechScale.z = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[2];
 
 		FbxLayerElementMaterial* layerElement;
 		layerElement = currentMesh.meshNode->GetElementMaterial();
@@ -196,8 +198,11 @@ void FBXConverter::LoadMeshes() {
 			<< meshes[i].rotation.y << ", "
 			<< meshes[i].rotation.z << "}\nVertices: "
 			<< meshes[i].controlPoints.size() << "\nMaterial "
-			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nScale: "
-			<< meshes[i].mechScale << "\n\n";
+			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nScale: {"
+			<< meshes[i].mechScale.x << ", "
+			<< meshes[i].mechScale.y << ", "
+			<< meshes[i].mechScale.z << "}\n\n"; 
+
 			
 			
 			// Check if a deformer is attached to the mesh

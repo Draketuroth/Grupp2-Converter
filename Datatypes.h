@@ -113,8 +113,7 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 	vector<Vertex_Standard>vertices;
 	vector<int>indices;
 	Material objectMaterial;
-
-	float mechScale; 
+	XMFLOAT3 mechScale; 
 
 };
 
