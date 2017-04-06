@@ -114,6 +114,8 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 	vector<int>indices;
 	Material objectMaterial;
 
+	float mechScale; 
+
 };
 
 struct Light {

@@ -164,6 +164,9 @@ void FBXConverter::LoadMeshes() {
 		currentMesh.rotation.y = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[1];
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 		
+		// the scale of the current mech
+		currentMesh.mechScale = currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
+
 		FbxLayerElementMaterial* layerElement;
 		layerElement = currentMesh.meshNode->GetElementMaterial();
 		if (layerElement->GetMappingMode() == FbxLayerElement::eAllSame)
@@ -193,7 +196,9 @@ void FBXConverter::LoadMeshes() {
 			<< meshes[i].rotation.y << ", "
 			<< meshes[i].rotation.z << "}\nVertices: "
 			<< meshes[i].controlPoints.size() << "\nMaterial "
-			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\n\n";
+			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nScale: "
+			<< meshes[i].mechScale << "\n\n";
+			
 			
 			// Check if a deformer is attached to the mesh
 			CheckSkeleton(meshes[i]);
