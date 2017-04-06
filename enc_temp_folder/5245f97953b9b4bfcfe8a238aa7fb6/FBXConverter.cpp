@@ -505,19 +505,18 @@ void FBXConverter::writeToFile()
 	{
 		float pos[3];
 	};
-	
+	vertices vertexData[1]
+	{
+		{1, 1, 1}
+	};
 	const static int meshCount = this->meshes.size();
 	int vertexCount = 0;
 	
 	for (size_t i = 0; i < meshCount; i++)
 	{
-		vertexCount += this->meshes[i].vertices.size();
+		//vertexCount += this->meshes[i].vertices.size();
+		out.write(reinterpret_cast<char*>(vertexData), sizeof(vertices) * 1);
 	}
-	
-	vertices* vertexData = new vertices[vertexCount];
 
-
-
-
-
+	//out.write(reinterpret_cast<char*>(this->meshes))
 }
