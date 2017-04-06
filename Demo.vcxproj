@@ -128,6 +128,7 @@
   <ItemGroup>
     <ClInclude Include="Datatypes.h" />
     <ClInclude Include="FBXConverter.h" />
+    <ClInclude Include="VertexType.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

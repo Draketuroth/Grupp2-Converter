@@ -14,6 +14,8 @@
 
 #include "Datatypes.h"
 
+#include "VertexType.h"
+
 using namespace std;
 using namespace DirectX;
 
@@ -33,6 +35,7 @@ public:
 	void LoadMeshes();
 	void ProcessControlPoints(Mesh &pMesh);
 	void CheckSkeleton(Mesh &pMesh);
+	void CreateVertexData(Mesh &pMesh);
 
 	void LoadLights();
 	void LoadCameras();

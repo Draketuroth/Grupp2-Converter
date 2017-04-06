@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <unordered_map>
 
+#include "VertexType.h"
+
 using namespace std;
 using namespace DirectX;
 
@@ -105,6 +107,8 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 	XMFLOAT3 rotation;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
 	Skeleton skeleton;
+	vector<Vertex_Standard>vertices;
+	vector<int>indices;
 
 };
 

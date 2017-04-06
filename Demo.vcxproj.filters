@@ -29,5 +29,8 @@
     <ClInclude Include="Datatypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VertexType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

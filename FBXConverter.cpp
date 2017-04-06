@@ -148,17 +148,23 @@ void FBXConverter::LoadMeshes() {
 			continue;
 		}
 
+		// Get the current mesh node and store it in our own datatype
 		currentMesh.meshNode = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
+
+		// Get name of the current mesh
 		currentMesh.name = currentMesh.meshNode->GetNode()->GetName();
 
+		// The the position of the current mesh
 		currentMesh.position.x = (float)currentMesh.meshNode->GetNode()->LclTranslation.Get().mData[0];
 		currentMesh.position.y = (float)currentMesh.meshNode->GetNode()->LclTranslation.Get().mData[1];
 		currentMesh.position.z = (float)currentMesh.meshNode->GetNode()->LclTranslation.Get().mData[2];
 
+		// The the rotation of the current mesh
 		currentMesh.rotation.x = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[0];
 		currentMesh.rotation.y = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[1];
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 
+		// Step through all the vertices in the mesh and temporarily load them into an unordered map
 		ProcessControlPoints(currentMesh);
 
 		meshes.push_back(currentMesh);
@@ -181,7 +187,11 @@ void FBXConverter::LoadMeshes() {
 			<< meshes[i].rotation.z << "}\nVertices: "
 			<< meshes[i].controlPoints.size() << "\n\n";
 		
+			// Check if a deformer is attached to the mesh
 			CheckSkeleton(meshes[i]);
+
+			// Create vertex array for the current mesh
+			CreateVertexData(meshes[i]);
 	}
 }
 
@@ -189,7 +199,7 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 
 	unsigned int controlPointCount = pMesh.meshNode->GetControlPointsCount();	// Store the total amount of control points
 
-	// Loop through all vertices and create individual controlpoints that are store in the control points vector
+	// Loop through all vertices and create individual vertices that are store in the control points vector
 
 	for (unsigned int i = 0; i < controlPointCount; i++) {
 
@@ -231,6 +241,62 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh) {
 		cout << "[NO CONTENT] No hierarchy was attached to " << pMesh.name << "\n";;
 	}
 }
+
+void FBXConverter::CreateVertexData(Mesh &pMesh) {
+
+		FbxVector4* pVertices = pMesh.meshNode->GetControlPoints();
+
+		int vertexCounter = 0;
+
+		for (int j = 0; j < pMesh.meshNode->GetPolygonCount(); j++) {
+
+			// Retreive the size of every polygon which should be represented as a triangle
+			int iNumVertices = pMesh.meshNode->GetPolygonSize(j);	
+
+			// Reassure that every polygon is a triangle and if not, don't allow the user to pass this point
+			assert(iNumVertices == 3);	
+
+			// Process every vertex in the triangle
+			for (int k = 0; k < iNumVertices; k++) {
+
+				// Retrieve the vertex index to know which control point in the vector to use
+				int iControlPointIndex = pMesh.meshNode->GetPolygonVertex(j, k);
+				ControlPoint* currentControlPoint = pMesh.controlPoints[iControlPointIndex];
+
+				// Initialize the vertex position from the corresponding control point in the vector
+				Vertex_Standard vertex;
+				vertex.pos = currentControlPoint->Position;	
+
+				// Initialize texture coordinates to store in the output vertex
+				FbxVector2 FBXTexcoord;
+				bool unmapped;
+				iControlPointIndex = pMesh.meshNode->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);	
+
+				vertex.uv.x = (float)FBXTexcoord.mData[0];
+				vertex.uv.y = (float)FBXTexcoord.mData[1];
+				vertex.uv.y = 1 - vertex.uv.y;
+
+				// Initialize normals to store in the output vertex
+				FbxVector4 FBXNormal;
+
+				iControlPointIndex = pMesh.meshNode->GetPolygonVertexNormal(j, k, FBXNormal);
+
+				vertex.normal.x = (float)FBXNormal.mData[0];
+				vertex.normal.y = (float)FBXNormal.mData[1];
+				vertex.normal.z = (float)FBXNormal.mData[2];
+
+				// Push back vertices to the current mesh
+				pMesh.vertices.push_back(vertex);
+
+				// Push back indices
+				pMesh.indices.push_back(vertexCounter);
+
+				vertexCounter++;
+			}
+		}
+
+		
+	}
 
 void FBXConverter::LoadLights() {
 
