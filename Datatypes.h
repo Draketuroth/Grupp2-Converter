@@ -79,6 +79,11 @@ struct BlendingIndexWeightPair { // Middle hand container to help with passing V
 		BlendWeight(0)
 	{}
 };
+struct Material
+{
+	FbxSurfaceMaterial* meshMaterial;
+	
+};
 
 struct ControlPoint { // Resembles a physical vertex point in the FBX SDK
 
@@ -91,14 +96,12 @@ struct ControlPoint { // Resembles a physical vertex point in the FBX SDK
 	}
 
 };
-
 struct Skeleton { // Stores every joint in the skeleton hierarchy from the loaded FBX file
 
 	vector<Joint> hierarchy;
 	int hierarchyDepth;
 
 };
-
 struct Mesh { // Extended node type to hold both the FBX mesh node and its vertices
 
 	FbxMesh* meshNode;
@@ -109,6 +112,7 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 	Skeleton skeleton;
 	vector<Vertex_Standard>vertices;
 	vector<int>indices;
+	Material objectMaterial;
 
 };
 

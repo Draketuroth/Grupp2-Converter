@@ -140,7 +140,7 @@ void FBXConverter::LoadMeshes() {
 
 			continue;
 		}
-
+		
 		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
 
 		if (AttributeType != FbxNodeAttribute::eMesh) {
@@ -163,12 +163,19 @@ void FBXConverter::LoadMeshes() {
 		currentMesh.rotation.x = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[0];
 		currentMesh.rotation.y = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[1];
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
+		
+		FbxLayerElementMaterial* layerElement;
+		layerElement = currentMesh.meshNode->GetElementMaterial();
+		if (layerElement->GetMappingMode() == FbxLayerElement::eAllSame)
+		{
+			int index = layerElement->GetIndexArray()[0];
+			currentMesh.objectMaterial.meshMaterial = pFbxChildNode->GetMaterial(index);
+		}
 
 		// Step through all the vertices in the mesh and temporarily load them into an unordered map
 		ProcessControlPoints(currentMesh);
 
 		meshes.push_back(currentMesh);
-
 	}
 
 	cout << "[OK] Found " << meshes.size() << " mesh(es) in the format\n\n";
@@ -185,8 +192,9 @@ void FBXConverter::LoadMeshes() {
 			<< meshes[i].rotation.x << ", "
 			<< meshes[i].rotation.y << ", "
 			<< meshes[i].rotation.z << "}\nVertices: "
-			<< meshes[i].controlPoints.size() << "\n\n";
-		
+			<< meshes[i].controlPoints.size() << "\nMaterial "
+			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\n\n";
+			
 			// Check if a deformer is attached to the mesh
 			CheckSkeleton(meshes[i]);
 
