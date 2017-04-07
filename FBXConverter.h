@@ -39,6 +39,7 @@ public:
 
 	void LoadLights();
 	void LoadCameras();
+	void writeToFile();
 	void LoadMorphAnim(FbxScene* scene);
 
 private:

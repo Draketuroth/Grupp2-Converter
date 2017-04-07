@@ -45,8 +45,6 @@ bool FBXConverter::Load(const char *fileName) {
 
 	LoadCameras();
 
-	//LoadMorphAnim(pFbxScene);
-
 	// Release components and destroy the FBX SDK manager
 
 	ReleaseAll();
@@ -132,8 +130,7 @@ void FBXConverter::LoadMeshes() {
 		"# STEP 2: LOADING THE MESHES AND VERTICES\n"
 		"#----------------------------------------------------------------------------\n" << endl;
 
-	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++)
-	{	// Get number of children nodes from the root node
+	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
 
 		Mesh currentMesh;
 
@@ -167,11 +164,7 @@ void FBXConverter::LoadMeshes() {
 		currentMesh.rotation.y = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[1];
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 		
-		// the scale of the current mech
-		currentMesh.mechScale.x = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
-		currentMesh.mechScale.y = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[1];
-		currentMesh.mechScale.z = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[2];
-
+		//Storing the material of the current mesh
 		FbxLayerElementMaterial* layerElement;
 		layerElement = currentMesh.meshNode->GetElementMaterial();
 		if (layerElement->GetMappingMode() == FbxLayerElement::eAllSame)
@@ -201,12 +194,7 @@ void FBXConverter::LoadMeshes() {
 			<< meshes[i].rotation.y << ", "
 			<< meshes[i].rotation.z << "}\nVertices: "
 			<< meshes[i].controlPoints.size() << "\nMaterial "
-			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nScale: {"
-			<< meshes[i].mechScale.x << ", "
-			<< meshes[i].mechScale.y << ", "
-			<< meshes[i].mechScale.z << "}\n\n"; 
-
-			
+			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\n\n";
 			
 			// Check if a deformer is attached to the mesh
 			CheckSkeleton(meshes[i]);
@@ -301,7 +289,6 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 				FbxVector4 FBXNormal;
 
 				iControlPointIndex = pMesh.meshNode->GetPolygonVertexNormal(j, k, FBXNormal);
-				
 
 				vertex.normal.x = (float)FBXNormal.mData[0];
 				vertex.normal.y = (float)FBXNormal.mData[1];
@@ -510,86 +497,6 @@ void FBXConverter::LoadCameras() {
 
 }
 
-void FBXConverter::LoadMorphAnim(FbxScene* scene)
-{
-	cout << "\n#----------------------------------------------------------------------------\n"
-		"# STEP 6: LOADING THE MORPH ANIMATIONS\n"
-		"#----------------------------------------------------------------------------\n" << endl;
-	for (unsigned int i = 0; i < pFbxRootNode->GetChildCount(); i++)
-	{
-		Mesh currentMesh;
-
-		FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);	// Current child being processed in the file
-
-		if (pFbxChildNode->GetNodeAttribute() == NULL) {
-
-			continue;
-		}
-		
-
-		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
-
-		if (AttributeType != FbxNodeAttribute::eMesh) 
-		{
-
-			continue;
-		}
-		currentMesh.meshNode = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
-		FbxStatus status;
-
-		if (currentMesh.meshNode->GetDeformerCount(FbxDeformer::eBlendShape) == 0)
-		{
-			continue;
-		}
-
-		FbxTime time;
-		FbxAnimCurveKey key;
-		FbxAnimCurve* lCurve = NULL;
-		FbxAnimStack* AnimStack;
-		FbxBlendShape* currentBlend;
-		FbxGeometry* currentGeom = (FbxGeometry*)AttributeType;
-		
-		
-		int BlendShapeDeformerCount = currentMesh.meshNode->GetDeformerCount(FbxDeformer::eBlendShape);
-		//FbxAnimStack
-
-		if (BlendShapeDeformerCount == 0)
-		{
-			cout << "\n#----------------------------------------------------------------------------\n"
-				"# NO BLEND SHAPES FOUND\n"
-				"#----------------------------------------------------------------------------\n" << endl;
-		}
-		for (unsigned int i = 0; i < BlendShapeDeformerCount; i++)
-		{
-			currentBlend = (FbxBlendShape*)currentMesh.meshNode->GetDeformer(i, FbxDeformer::eBlendShape);
-
-			int BlendshapeChannelCount = currentBlend->GetBlendShapeChannelCount();
-			for (unsigned int i = 0; i < BlendshapeChannelCount; i++)
-			{
-
-				FbxBlendShapeChannel* BSchannel = currentBlend->GetBlendShapeChannel(i);
-				int targetCount = BSchannel->GetTargetShapeCount();
-				string channelName = BSchannel->GetName();
-				int srcCount = scene->GetSrcObjectCount();
-				for (unsigned int  i = 0; i < targetCount; i++)
-				{
-					//BSchannel->
-				}
-			}
-
-
-		}
-
-		
-	}
-
-	
-
-
-
-
-}
-
 void FBXConverter::writeToFile()
 {
 	ofstream out("vertexdata.txt");
@@ -598,19 +505,18 @@ void FBXConverter::writeToFile()
 	{
 		float pos[3];
 	};
-	
+	vertices vertexData[1]
+	{
+		{1, 1, 1}
+	};
 	const static int meshCount = this->meshes.size();
 	int vertexCount = 0;
 	
 	for (size_t i = 0; i < meshCount; i++)
 	{
-		vertexCount += this->meshes[i].vertices.size();
+		//vertexCount += this->meshes[i].vertices.size();
+		out.write(reinterpret_cast<char*>(vertexData), sizeof(vertices) * 1);
 	}
-	
-	vertices* vertexData = new vertices[vertexCount];
 
-
-
-
-
+	//out.write(reinterpret_cast<char*>(this->meshes))
 }
