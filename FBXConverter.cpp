@@ -269,7 +269,8 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 
 		int vertexCounter = 0;
 
-		for (int j = 0; j < pMesh.meshNode->GetPolygonCount(); j++) {
+		for (int j = 0; j < pMesh.meshNode->GetPolygonCount(); j++)
+		{
 
 			// Retreive the size of every polygon which should be represented as a triangle
 			int iNumVertices = pMesh.meshNode->GetPolygonSize(j);	
@@ -299,8 +300,10 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 
 				// Initialize normals to store in the output vertex
 				FbxVector4 FBXNormal;
-
+				
 				iControlPointIndex = pMesh.meshNode->GetPolygonVertexNormal(j, k, FBXNormal);
+				
+				
 				
 
 				vertex.normal.x = (float)FBXNormal.mData[0];
@@ -314,8 +317,84 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 				pMesh.indices.push_back(vertexCounter);
 
 				vertexCounter++;
+
+
+				if (pMesh.meshNode->GetElementBinormalCount() < 1)
+				{
+					throw exception("Invalid Binormal Number");
+				}
+
+				FbxLayerElementBinormal* BiNormals = pMesh.meshNode->GetLayer(1)->GetBinormals();
+				FbxLayerElementTangent* Tangents = pMesh.meshNode->GetLayer(1)->GetTangents();
+				
+				//////////////////////////////////////////////////////////////
+				//                     GET BINORMALS
+				//////////////////////////////////////////////////////////////
+				if (BiNormals->GetMappingMode() == FbxLayerElement::eByPolygonVertex)
+				{
+					switch (BiNormals->GetReferenceMode())
+					{
+					case FbxLayerElement::eDirect:
+					{
+						vertex.BiNormal.x = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[0];
+						vertex.BiNormal.y = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[1];
+						vertex.BiNormal.z = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+
+					}
+					case  FbxLayerElement::eIndexToDirect:
+					{
+						int index = BiNormals->GetIndexArray().GetAt(iControlPointIndex);
+
+						vertex.BiNormal.x = (float)BiNormals->GetDirectArray().GetAt(index).mData[0];
+						vertex.BiNormal.y = (float)BiNormals->GetDirectArray().GetAt(index).mData[1];
+						vertex.BiNormal.z = (float)BiNormals->GetDirectArray().GetAt(index).mData[2];
+					}
+					default:
+						cout << "Error: Invalid binormal reference mode\n";
+						break;
+					}
+				}
+
+
+				//////////////////////////////////////////////////////////////
+				//                     GET TANGENTS
+				//////////////////////////////////////////////////////////////
+
+				if (Tangents->GetMappingMode() == FbxLayerElement::eByPolygonVertex)
+				{
+					switch (Tangents->GetReferenceMode())
+					{
+					case FbxLayerElement::eDirect:
+					{
+						vertex.TangentNormal.x = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[0];
+						vertex.TangentNormal.y = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[1];
+						vertex.TangentNormal.z = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+
+					}
+					case  FbxLayerElement::eIndexToDirect:
+					{
+						int index = Tangents->GetIndexArray().GetAt(iControlPointIndex);
+
+						vertex.TangentNormal.x = (float)BiNormals->GetDirectArray().GetAt(index).mData[0];
+						vertex.TangentNormal.y = (float)BiNormals->GetDirectArray().GetAt(index).mData[1];
+						vertex.TangentNormal.z = (float)BiNormals->GetDirectArray().GetAt(index).mData[2];
+					}
+					default:
+						cout << "Error: Invalid Tangent reference mode\n";
+						break;
+					}
+				}
+				
 			}
 		}
+
+
+		for (unsigned int i = 0; i < pMesh.meshNode->GetLayerCount; i++)
+		{
+			
+		}
+
+		                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 
 		
 	}
