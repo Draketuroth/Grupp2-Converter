@@ -45,6 +45,8 @@ bool FBXConverter::Load(const char *fileName) {
 
 	LoadCameras();
 
+	//LoadMorphAnim(pFbxScene);
+
 	// Release components and destroy the FBX SDK manager
 
 	ReleaseAll();
@@ -130,7 +132,8 @@ void FBXConverter::LoadMeshes() {
 		"# STEP 2: LOADING THE MESHES AND VERTICES\n"
 		"#----------------------------------------------------------------------------\n" << endl;
 
-	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
+	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++)
+	{	// Get number of children nodes from the root node
 
 		Mesh currentMesh;
 
@@ -493,5 +496,84 @@ void FBXConverter::LoadCameras() {
 
 		cout << "[NO CONTENT FOUND] No cameras were found in the scene";
 	}
+
+}
+
+void FBXConverter::LoadMorphAnim(FbxScene* scene)
+{
+	cout << "\n#----------------------------------------------------------------------------\n"
+		"# STEP 6: LOADING THE MORPH ANIMATIONS\n"
+		"#----------------------------------------------------------------------------\n" << endl;
+	for (unsigned int i = 0; i < pFbxRootNode->GetChildCount(); i++)
+	{
+		Mesh currentMesh;
+
+		FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);	// Current child being processed in the file
+
+		if (pFbxChildNode->GetNodeAttribute() == NULL) {
+
+			continue;
+		}
+		
+
+		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
+
+		if (AttributeType != FbxNodeAttribute::eMesh) 
+		{
+
+			continue;
+		}
+		currentMesh.meshNode = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
+		FbxStatus status;
+
+		if (currentMesh.meshNode->GetDeformerCount(FbxDeformer::eBlendShape) == 0)
+		{
+			continue;
+		}
+
+		FbxTime time;
+		FbxAnimCurveKey key;
+		FbxAnimCurve* lCurve = NULL;
+		FbxAnimStack* AnimStack;
+		FbxBlendShape* currentBlend;
+		FbxGeometry* currentGeom = (FbxGeometry*)AttributeType;
+		
+		
+		int BlendShapeDeformerCount = currentMesh.meshNode->GetDeformerCount(FbxDeformer::eBlendShape);
+		//FbxAnimStack
+
+		if (BlendShapeDeformerCount == 0)
+		{
+			cout << "\n#----------------------------------------------------------------------------\n"
+				"# NO BLEND SHAPES FOUND\n"
+				"#----------------------------------------------------------------------------\n" << endl;
+		}
+		for (unsigned int i = 0; i < BlendShapeDeformerCount; i++)
+		{
+			currentBlend = (FbxBlendShape*)currentMesh.meshNode->GetDeformer(i, FbxDeformer::eBlendShape);
+
+			int BlendshapeChannelCount = currentBlend->GetBlendShapeChannelCount();
+			for (unsigned int i = 0; i < BlendshapeChannelCount; i++)
+			{
+
+				FbxBlendShapeChannel* BSchannel = currentBlend->GetBlendShapeChannel(i);
+				int targetCount = BSchannel->GetTargetShapeCount();
+				string channelName = BSchannel->GetName();
+				int srcCount = scene->GetSrcObjectCount();
+				for (unsigned int  i = 0; i < targetCount; i++)
+				{
+					//BSchannel->
+				}
+			}
+
+
+		}
+
+		
+	}
+
+	
+
+
 
 }
