@@ -244,14 +244,6 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh) {
 
 		cout << "[OK] Found a joint hierarchy attached to " << pMesh.name << "\n";
 
-		/*for (unsigned int deformerIndex = 0; deformerIndex < deformerCount; deformerIndex++) {
-
-			FbxSkin* currentSkin = reinterpret_cast<FbxSkin*>(pMesh.meshNode->GetDeformer(deformerIndex, FbxDeformer::eSkin));
-
-
-
-		}*/
-
 	}
 
 	else {
