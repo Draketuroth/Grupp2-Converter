@@ -298,6 +298,7 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 				FbxVector4 FBXNormal;
 
 				iControlPointIndex = pMesh.meshNode->GetPolygonVertexNormal(j, k, FBXNormal);
+				
 
 				vertex.normal.x = (float)FBXNormal.mData[0];
 				vertex.normal.y = (float)FBXNormal.mData[1];
