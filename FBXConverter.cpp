@@ -166,13 +166,19 @@ void FBXConverter::LoadMeshes() {
 		
 		//Storing the material of the current mesh
 		FbxLayerElementMaterial* layerElement;
+		FbxSurfaceLambert* lambertCheck;
+
 		layerElement = currentMesh.meshNode->GetElementMaterial();
 		if (layerElement->GetMappingMode() == FbxLayerElement::eAllSame)
 		{
 			int index = layerElement->GetIndexArray()[0];
 			currentMesh.objectMaterial.meshMaterial = pFbxChildNode->GetMaterial(index);
 		}
+		currentMesh.objectMaterial.Ambient = currentMesh.objectMaterial.meshMaterial->sAmbient;
+		currentMesh.objectMaterial.Diffuse = currentMesh.objectMaterial.meshMaterial->sDiffuseFactor;
+		currentMesh.objectMaterial.Specular = currentMesh.objectMaterial.meshMaterial->sSpecularFactor;
 
+		
 		// Step through all the vertices in the mesh and temporarily load them into an unordered map
 		ProcessControlPoints(currentMesh);
 
@@ -193,8 +199,11 @@ void FBXConverter::LoadMeshes() {
 			<< meshes[i].rotation.x << ", "
 			<< meshes[i].rotation.y << ", "
 			<< meshes[i].rotation.z << "}\nVertices: "
-			<< meshes[i].controlPoints.size() << "\nMaterial "
-			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\n\n";
+			<< meshes[i].controlPoints.size() << "\nMaterial: "
+			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nDiffuse: "
+			<< meshes[i].objectMaterial.Diffuse << "\nAmbient: "
+			<< meshes[i].objectMaterial.Ambient << "\nSpecular: "
+			<< meshes[i].objectMaterial.Specular << "\n\n";
 			
 			// Check if a deformer is attached to the mesh
 			CheckSkeleton(meshes[i]);

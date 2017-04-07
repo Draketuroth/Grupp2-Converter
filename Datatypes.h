@@ -82,6 +82,9 @@ struct BlendingIndexWeightPair { // Middle hand container to help with passing V
 struct Material
 {
 	FbxSurfaceMaterial* meshMaterial;
+	const char* Ambient;
+	const char* Diffuse;
+	const char* Specular;
 	
 };
 
