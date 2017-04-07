@@ -164,11 +164,7 @@ void FBXConverter::LoadMeshes() {
 		currentMesh.rotation.y = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[1];
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 		
-		// the scale of the current mech
-		currentMesh.mechScale.x = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
-		currentMesh.mechScale.y = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[1];
-		currentMesh.mechScale.z = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[2];
-
+		//Storing the material of the current mesh
 		FbxLayerElementMaterial* layerElement;
 		layerElement = currentMesh.meshNode->GetElementMaterial();
 		if (layerElement->GetMappingMode() == FbxLayerElement::eAllSame)
@@ -198,12 +194,7 @@ void FBXConverter::LoadMeshes() {
 			<< meshes[i].rotation.y << ", "
 			<< meshes[i].rotation.z << "}\nVertices: "
 			<< meshes[i].controlPoints.size() << "\nMaterial "
-			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nScale: {"
-			<< meshes[i].mechScale.x << ", "
-			<< meshes[i].mechScale.y << ", "
-			<< meshes[i].mechScale.z << "}\n\n"; 
-
-			
+			<< meshes[i].objectMaterial.meshMaterial->GetName() << "\n\n";
 			
 			// Check if a deformer is attached to the mesh
 			CheckSkeleton(meshes[i]);
@@ -514,19 +505,18 @@ void FBXConverter::writeToFile()
 	{
 		float pos[3];
 	};
-	
+	vertices vertexData[1]
+	{
+		{1, 1, 1}
+	};
 	const static int meshCount = this->meshes.size();
 	int vertexCount = 0;
 	
 	for (size_t i = 0; i < meshCount; i++)
 	{
-		vertexCount += this->meshes[i].vertices.size();
+		//vertexCount += this->meshes[i].vertices.size();
+		out.write(reinterpret_cast<char*>(vertexData), sizeof(vertices) * 1);
 	}
-	
-	vertices* vertexData = new vertices[vertexCount];
 
-
-
-
-
+	//out.write(reinterpret_cast<char*>(this->meshes))
 }
