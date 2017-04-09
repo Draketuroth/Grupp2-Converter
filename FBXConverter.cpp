@@ -320,7 +320,7 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 void FBXConverter::LoadLights() {
 
 	cout << "\n#----------------------------------------------------------------------------\n"
-		"# STEP 4: LOADING THE LIGHTS\n"
+		"# STEP 3: LOADING THE LIGHTS\n"
 		"#----------------------------------------------------------------------------\n" << endl;
 
 	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
@@ -443,7 +443,7 @@ void FBXConverter::LoadLights() {
 void FBXConverter::LoadCameras() {
 
 	cout << "\n#----------------------------------------------------------------------------\n"
-		"# STEP 5: LOADING THE CAMERAS\n"
+		"# STEP 4: LOADING THE CAMERAS\n"
 		"#----------------------------------------------------------------------------\n" << endl;
 
 	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
