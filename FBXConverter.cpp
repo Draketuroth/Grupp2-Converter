@@ -222,9 +222,10 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 
 	// Loop through all vertices and create individual vertices that are store in the control points vector
 
+	ControlPoint* currentControlPoint = new ControlPoint();
+
 	for (unsigned int i = 0; i < controlPointCount; i++) {
 
-		ControlPoint* currentControlPoint = new ControlPoint();
 		XMFLOAT3 position;
 		position.x = static_cast<float>(pMesh.meshNode->GetControlPointAt(i).mData[0]);
 
@@ -236,6 +237,8 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 		pMesh.controlPoints[i] = currentControlPoint;
 
 	}
+
+	currentControlPoint = nullptr;
 }
 
 void FBXConverter::CheckSkeleton(Mesh &pMesh) {
@@ -695,6 +698,7 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh) {
 
 		}
 	}
+
 
 }
 
