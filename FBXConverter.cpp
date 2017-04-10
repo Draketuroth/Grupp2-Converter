@@ -266,9 +266,9 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh) {
 void FBXConverter::CreateVertexData(Mesh &pMesh) {
 
 		FbxVector4* pVertices = pMesh.meshNode->GetControlPoints();
-
+		int index = 0;
 		int vertexCounter = 0;
-
+		int i = 0;
 		for (int j = 0; j < pMesh.meshNode->GetPolygonCount(); j++)
 		{
 
@@ -279,7 +279,8 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 			assert(iNumVertices == 3);	
 
 			// Process every vertex in the triangle
-			for (int k = 0; k < iNumVertices; k++) {
+			for (int k = 0; k < iNumVertices; k++) 
+			{
 
 				// Retrieve the vertex index to know which control point in the vector to use
 				int iControlPointIndex = pMesh.meshNode->GetPolygonVertex(j, k);
@@ -321,82 +322,91 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 
 				if (pMesh.meshNode->GetElementBinormalCount() < 1)
 				{
-					throw exception("Invalid Binormal Number");
+					cout << ("Invalid Binormal Number") << endl;
+					continue;
 				}
 
-				FbxLayerElementBinormal* BiNormals = pMesh.meshNode->GetLayer(1)->GetBinormals();
-				FbxLayerElementTangent* Tangents = pMesh.meshNode->GetLayer(1)->GetTangents();
+				
 				
 				//////////////////////////////////////////////////////////////
 				//                     GET BINORMALS
 				//////////////////////////////////////////////////////////////
-				if (BiNormals->GetMappingMode() == FbxLayerElement::eByPolygonVertex)
+
+				for (i = 0; i < pMesh.meshNode->GetElementBinormalCount(); i++)
 				{
-					switch (BiNormals->GetReferenceMode())
-					{
-					case FbxLayerElement::eDirect:
-					{
-						vertex.BiNormal.x = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[0];
-						vertex.BiNormal.y = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[1];
-						vertex.BiNormal.z = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+					FbxGeometryElementBinormal* binormals = pMesh.meshNode->GetElementBinormal(i);
+					iControlPointIndex = pMesh.meshNode->GetPolygonVertex(j, k);
 
-					}
-					case  FbxLayerElement::eIndexToDirect:
+					if (binormals->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 					{
-						int index = BiNormals->GetIndexArray().GetAt(iControlPointIndex);
+						switch (binormals->GetReferenceMode())
+						{
+						case FbxGeometryElement::eDirect:
+						{
+							vertex.BiNormal.x = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[0];
+							vertex.BiNormal.y = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[1];
+ 							vertex.BiNormal.z = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+							
+							cout << vertex.BiNormal.x << " " << vertex.BiNormal.y << " " << vertex.BiNormal.z << " " << endl;
+							break;
+						}
+						case  FbxGeometryElement::eIndexToDirect:
+						{
+							index = binormals->GetIndexArray().GetAt(iControlPointIndex);
 
-						vertex.BiNormal.x = (float)BiNormals->GetDirectArray().GetAt(index).mData[0];
-						vertex.BiNormal.y = (float)BiNormals->GetDirectArray().GetAt(index).mData[1];
-						vertex.BiNormal.z = (float)BiNormals->GetDirectArray().GetAt(index).mData[2];
-					}
-					default:
-						cout << "Error: Invalid binormal reference mode\n";
-						break;
+							vertex.BiNormal.x = (float)binormals->GetDirectArray().GetAt(index).mData[0];
+							vertex.BiNormal.y = (float)binormals->GetDirectArray().GetAt(index).mData[1];
+							vertex.BiNormal.z = (float)binormals->GetDirectArray().GetAt(index).mData[2];
+							break;
+						}
+						default:
+							cout << "Error: Invalid binormal reference mode\n";
+							break;
+						}
 					}
 				}
 
-
+				index = 0;
 				//////////////////////////////////////////////////////////////
 				//                     GET TANGENTS
 				//////////////////////////////////////////////////////////////
-
-				if (Tangents->GetMappingMode() == FbxLayerElement::eByPolygonVertex)
+				
+				for (i = 0; i < pMesh.meshNode->GetElementTangentCount(); i++)
 				{
-					switch (Tangents->GetReferenceMode())
-					{
-					case FbxLayerElement::eDirect:
-					{
-						vertex.TangentNormal.x = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[0];
-						vertex.TangentNormal.y = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[1];
-						vertex.TangentNormal.z = (float)BiNormals->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+					FbxGeometryElementTangent* tangents = pMesh.meshNode->GetElementTangent(i);
 
-					}
-					case  FbxLayerElement::eIndexToDirect:
+					if (tangents->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 					{
-						int index = Tangents->GetIndexArray().GetAt(iControlPointIndex);
+						
+						switch (tangents->GetReferenceMode())
+						{
+							case FbxGeometryElement::eDirect:
+							{
+								vertex.TangentNormal.x = (float)tangents->GetDirectArray().GetAt(iControlPointIndex).mData[0];
+								vertex.TangentNormal.y = (float)tangents->GetDirectArray().GetAt(iControlPointIndex).mData[1];
+								vertex.TangentNormal.z = (float)tangents->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+								break;
 
-						vertex.TangentNormal.x = (float)BiNormals->GetDirectArray().GetAt(index).mData[0];
-						vertex.TangentNormal.y = (float)BiNormals->GetDirectArray().GetAt(index).mData[1];
-						vertex.TangentNormal.z = (float)BiNormals->GetDirectArray().GetAt(index).mData[2];
-					}
-					default:
-						cout << "Error: Invalid Tangent reference mode\n";
-						break;
+							}
+							case  FbxGeometryElement::eIndexToDirect:
+							{
+								index = tangents->GetIndexArray().GetAt(iControlPointIndex);
+
+								vertex.TangentNormal.x = (float)tangents->GetDirectArray().GetAt(index).mData[0];
+								vertex.TangentNormal.y = (float)tangents->GetDirectArray().GetAt(index).mData[1];
+								vertex.TangentNormal.z = (float)tangents->GetDirectArray().GetAt(index).mData[2];
+								break;
+							}
+							default:
+								cout << "Error: Invalid Tangent reference mode\n";
+								break;
+						}
 					}
 				}
-				
 			}
 		}
 
 
-		for (unsigned int i = 0; i < pMesh.meshNode->GetLayerCount; i++)
-		{
-			
-		}
-
-		                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-
-		
 	}
 
 void FBXConverter::LoadLights() {
