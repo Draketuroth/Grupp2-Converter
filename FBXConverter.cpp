@@ -348,7 +348,7 @@ void FBXConverter::CreateVertexData(Mesh &pMesh) {
 							vertex.BiNormal.y = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[1];
  							vertex.BiNormal.z = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[2];
 							
-							cout << vertex.BiNormal.x << " " << vertex.BiNormal.y << " " << vertex.BiNormal.z << " " << endl;
+							//cout << vertex.BiNormal.x << " " << vertex.BiNormal.y << " " << vertex.BiNormal.z << " " << endl;
 							break;
 						}
 						case  FbxGeometryElement::eIndexToDirect:
