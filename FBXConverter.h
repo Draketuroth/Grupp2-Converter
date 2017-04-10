@@ -34,12 +34,26 @@ public:
 
 	void LoadMeshes();
 	void ProcessControlPoints(Mesh &pMesh);
+	
 	void CheckSkeleton(Mesh &pMesh);
+
 	void CreateVertexData(Mesh &pMesh);
 
 	void LoadLights();
 	void LoadCameras();
 	void writeToFile();
+
+	void LoadSkeletonHierarchy(Mesh &pMesh);
+
+	void RecursiveDepthFirstSearch(Mesh &pMesh, FbxNode* node, int depth, int index, int parentIndex);
+
+	void GatherAnimationData(Mesh &pMesh);
+
+
+	FbxAMatrix GetGeometryTransformation(FbxNode* node);
+	unsigned int FindJointIndexByName(std::string& jointName, Skeleton skeleton);
+
+	void ConvertToLeftHanded(FbxAMatrix &matrix);
 
 private:
 
