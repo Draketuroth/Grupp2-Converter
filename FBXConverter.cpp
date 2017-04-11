@@ -225,7 +225,7 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 
 		cout << "[DEFORMER FOUND] Found a joint hierarchy attached to " << pMesh.name.c_str() << "\n\nVERTEX LAYOUT: SKELETAL\n" << endl;
 
-		LoadSkeletonHierarchy(pFbxRootNode, pMesh);
+		/*LoadSkeletonHierarchy(pFbxRootNode, pMesh);
 
 		ProcessControlPoints(pMesh);
 
@@ -234,7 +234,7 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 			cout << "[FATAL ERROR] Animation data from " << pMesh.name.c_str() << " couldn't be loaded\n" << endl;
 		}
 
-		CreateVertexDataBone(pMesh, pFbxRootNode);
+		CreateVertexDataBone(pMesh, pFbxRootNode);*/
 
 	}
 
@@ -362,6 +362,8 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 		return false;
 	}
 
+	pFbxRootNode = pScene->GetRootNode();
+
 	return true;
 }
 
@@ -485,69 +487,150 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 
 	if (pFbxRootNode) {
 
+		int index = 0;
 		int vertexCounter = 0;
+		int i = 0;
 		FbxMesh* currentMesh;
 
-		for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {
+		currentMesh = GetMeshFromRoot(pFbxRootNode, pMesh.name);
+		FbxVector4* pVertices = currentMesh->GetControlPoints();
 
-			currentMesh = GetMeshFromRoot(pFbxRootNode, pMesh.name);
-			FbxVector4* pVertices = currentMesh->GetControlPoints();
+		for (int j = 0; j < currentMesh->GetPolygonCount(); j++) {
 
-			int vertexCounter = 0;
+			// Retreive the size of every polygon which should be represented as a triangle
+			int iNumVertices = currentMesh->GetPolygonSize(j);
 
-			for (int j = 0; j < currentMesh->GetPolygonCount(); j++) {
+			// Reassure that every polygon is a triangle and if not, don't allow the user to pass this point
+			assert(iNumVertices == 3);
 
-				// Retreive the size of every polygon which should be represented as a triangle
-				int iNumVertices = currentMesh->GetPolygonSize(j);
+			// Process every vertex in the triangle
+			for (int k = 0; k < iNumVertices; k++) {
 
-				// Reassure that every polygon is a triangle and if not, don't allow the user to pass this point
-				assert(iNumVertices == 3);
+				// Retrieve the vertex index to know which control point in the vector to use
+				int iControlPointIndex = currentMesh->GetPolygonVertex(j, k);
+				ControlPoint* currentControlPoint = pMesh.controlPoints[iControlPointIndex];
 
-				// Process every vertex in the triangle
-				for (int k = 0; k < iNumVertices; k++) {
+				// Initialize the vertex position from the corresponding control point in the vector
+				Vertex_Standard vertex;
+				vertex.pos = currentControlPoint->Position;
 
-					// Retrieve the vertex index to know which control point in the vector to use
-					int iControlPointIndex = currentMesh->GetPolygonVertex(j, k);
-					ControlPoint* currentControlPoint = pMesh.controlPoints[iControlPointIndex];
+				// Initialize texture coordinates to store in the output vertex
+				FbxVector2 FBXTexcoord;
+				bool unmapped;
+				iControlPointIndex = currentMesh->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);
 
-					// Initialize the vertex position from the corresponding control point in the vector
-					Vertex_Standard vertex;
-					vertex.pos = currentControlPoint->Position;
+				vertex.uv.x = (float)FBXTexcoord.mData[0];
+				vertex.uv.y = (float)FBXTexcoord.mData[1];
+				vertex.uv.y = 1 - vertex.uv.y;
 
-					// Initialize texture coordinates to store in the output vertex
-					FbxVector2 FBXTexcoord;
-					bool unmapped;
-					iControlPointIndex = currentMesh->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);
+				// Initialize normals to store in the output vertex
+				FbxVector4 FBXNormal;
 
-					vertex.uv.x = (float)FBXTexcoord.mData[0];
-					vertex.uv.y = (float)FBXTexcoord.mData[1];
-					vertex.uv.y = 1 - vertex.uv.y;
+				iControlPointIndex = currentMesh->GetPolygonVertexNormal(j, k, FBXNormal);
 
-					// Initialize normals to store in the output vertex
-					FbxVector4 FBXNormal;
+				vertex.normal.x = (float)FBXNormal.mData[0];
+				vertex.normal.y = (float)FBXNormal.mData[1];
+				vertex.normal.z = (float)FBXNormal.mData[2];
 
-					iControlPointIndex = currentMesh->GetPolygonVertexNormal(j, k, FBXNormal);
+				// Push back vertices to the current mesh
+				pMesh.standardVertices.push_back(vertex);
 
-					vertex.normal.x = (float)FBXNormal.mData[0];
-					vertex.normal.y = (float)FBXNormal.mData[1];
-					vertex.normal.z = (float)FBXNormal.mData[2];
+				// Push back indices
+				pMesh.indices.push_back(vertexCounter);
 
-					// Push back vertices to the current mesh
-					pMesh.standardVertices.push_back(vertex);
+				vertexCounter++;
 
-					// Push back indices
-					pMesh.indices.push_back(vertexCounter);
-
-					vertexCounter++;
+				if (currentMesh->GetElementBinormalCount() < 1)
+				{
+					cout << ("Invalid Binormal Number") << endl;
+					continue;
 				}
+
+				//////////////////////////////////////////////////////////////
+				//                     GET BINORMALS
+				//////////////////////////////////////////////////////////////
+
+				for (i = 0; i < currentMesh->GetElementBinormalCount(); i++)
+				{
+					FbxGeometryElementBinormal* binormals = currentMesh->GetElementBinormal(i);
+					iControlPointIndex = currentMesh->GetPolygonVertex(j, k);
+
+					if (binormals->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+					{
+						switch (binormals->GetReferenceMode())
+						{
+						case FbxGeometryElement::eDirect:
+						{
+							vertex.BiNormal.x = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[0];
+							vertex.BiNormal.y = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[1];
+							vertex.BiNormal.z = (float)binormals->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+
+							//cout << vertex.BiNormal.x << " " << vertex.BiNormal.y << " " << vertex.BiNormal.z << " " << endl;
+							break;
+						}
+						case  FbxGeometryElement::eIndexToDirect:
+						{
+							index = binormals->GetIndexArray().GetAt(iControlPointIndex);
+
+							vertex.BiNormal.x = (float)binormals->GetDirectArray().GetAt(index).mData[0];
+							vertex.BiNormal.y = (float)binormals->GetDirectArray().GetAt(index).mData[1];
+							vertex.BiNormal.z = (float)binormals->GetDirectArray().GetAt(index).mData[2];
+							break;
+						}
+						default:
+							cout << "Error: Invalid binormal reference mode\n";
+							break;
+						}
+					}
+				}
+
+				index = 0;
+				//////////////////////////////////////////////////////////////
+				//                     GET TANGENTS
+				//////////////////////////////////////////////////////////////
+
+				for (i = 0; i < currentMesh->GetElementTangentCount(); i++)
+				{
+					FbxGeometryElementTangent* tangents = currentMesh->GetElementTangent(i);
+
+					if (tangents->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+					{
+
+						switch (tangents->GetReferenceMode())
+						{
+						case FbxGeometryElement::eDirect:
+						{
+							vertex.TangentNormal.x = (float)tangents->GetDirectArray().GetAt(iControlPointIndex).mData[0];
+							vertex.TangentNormal.y = (float)tangents->GetDirectArray().GetAt(iControlPointIndex).mData[1];
+							vertex.TangentNormal.z = (float)tangents->GetDirectArray().GetAt(iControlPointIndex).mData[2];
+							break;
+
+						}
+						case  FbxGeometryElement::eIndexToDirect:
+						{
+							index = tangents->GetIndexArray().GetAt(iControlPointIndex);
+
+							vertex.TangentNormal.x = (float)tangents->GetDirectArray().GetAt(index).mData[0];
+							vertex.TangentNormal.y = (float)tangents->GetDirectArray().GetAt(index).mData[1];
+							vertex.TangentNormal.z = (float)tangents->GetDirectArray().GetAt(index).mData[2];
+							break;
+						}
+						default:
+							cout << "Error: Invalid Tangent reference mode\n";
+							break;
+						}
+
+
+					}
+				}
+
 			}
 
 		}
 
 	}
 
-		
-	}
+}
 
 void FBXConverter::CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode) {
 
