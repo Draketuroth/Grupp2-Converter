@@ -19,6 +19,8 @@
 using namespace std;
 using namespace DirectX;
 
+#define ANIMATIONCOUNT 2
+
 class FBXConverter {
 
 public:

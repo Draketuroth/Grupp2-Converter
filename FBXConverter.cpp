@@ -302,7 +302,7 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 	HRESULT hr;
 	const char* currentFilePath;
 
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < ANIMATIONCOUNT; i++) {
 
 		if (i == 0) {
 
@@ -318,21 +318,6 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 			pFbxRootNode = pScene->GetRootNode();
 
 		}
-
-		/*if (i == 1) {
-
-			currentFilePath = "FbxModel\\wave.fbx";
-			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
-
-			if (FAILED(hr)) {
-
-				cout << currentFilePath << " wasn't found" << endl;
-				return false;
-			}
-
-			pFbxRootNode = pScene->GetRootNode();
-
-		}*/
 
 		if (i == 1) {
 
