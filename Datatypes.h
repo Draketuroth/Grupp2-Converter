@@ -114,16 +114,16 @@ struct Skeleton { // Stores every joint in the skeleton hierarchy from the loade
 struct Mesh { // Extended node type to hold both the FBX mesh node and its vertices
 
 	FbxMesh* meshNode;
-	const char* name;
+	string name;
 	XMFLOAT3 position;
 	XMFLOAT3 rotation;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
 	Skeleton skeleton;
-	vector<Vertex_Standard>vertices;
+	vector<Vertex_Standard>standardVertices;
+	vector<Vertex_Bone>boneVertices;
 	vector<int>indices;
 	Material objectMaterial;
-	XMFLOAT3 mechScale;
-	string vertexLayout;
+	XMFLOAT3 meshScale;
 
 };
 

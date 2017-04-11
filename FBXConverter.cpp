@@ -154,9 +154,9 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 		
 		// the scale of the current mech
-		currentMesh.mechScale.x = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
-		currentMesh.mechScale.y = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[1];
-		currentMesh.mechScale.z = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[2];
+		currentMesh.meshScale.x = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
+		currentMesh.meshScale.y = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[1];
+		currentMesh.meshScale.z = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[2];
 
 		FbxLayerElementMaterial* layerElement;
 		layerElement = currentMesh.meshNode->GetElementMaterial();
@@ -179,7 +179,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 
 				CheckSkeleton(meshes[i], pFbxRootNode, gFbxSdkManager, pImporter, pScene);
 
-				cout << "Name: " << meshes[i].name << "\nPosition: {"
+				cout << "Name: " << meshes[i].name.c_str() << "\nPosition: {"
 				<< meshes[i].position.x << ", "
 				<< meshes[i].position.y << ", "
 				<< meshes[i].position.z << "}\nRotation: {"
@@ -188,9 +188,9 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 				<< meshes[i].rotation.z << "}\nVertices: "
 				<< meshes[i].controlPoints.size() << "\nMaterial "
 				<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nScale: {"
-				<< meshes[i].mechScale.x << ", "
-				<< meshes[i].mechScale.y << ", "
-				<< meshes[i].mechScale.z << "}\n\n";
+				<< meshes[i].meshScale.x << ", "
+				<< meshes[i].meshScale.y << ", "
+				<< meshes[i].meshScale.z << "}\n\n";
 	}
 }
 
@@ -223,25 +223,29 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 	
 	if (deformerCount > 0) {
 
-		cout << "[DEFORMER FOUND] Found a joint hierarchy attached to " << pMesh.name << "\n\nVERTEX LAYOUT: SKELETAL\n" << endl;
+		cout << "[DEFORMER FOUND] Found a joint hierarchy attached to " << pMesh.name.c_str() << "\n\nVERTEX LAYOUT: SKELETAL\n" << endl;
 
 		LoadSkeletonHierarchy(pFbxRootNode, pMesh);
 
 		ProcessControlPoints(pMesh);
 
-		//LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene);
+		if (!LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene)) {
 
-		CreateVertexDataStandard(pMesh);
+			cout << "[FATAL ERROR] Animation data from " << pMesh.name.c_str() << " couldn't be loaded\n" << endl;
+		}
+
+		CreateVertexDataBone(pMesh, pFbxRootNode);
+
 	}
 
 	else {
 
-		cout << "[NO DEFORMER] No hierarchy was attached to " << pMesh.name << "\n\nVERTEX LAYOUT: DEFAULT\n" << endl;
+		cout << "[NO DEFORMER] No hierarchy was attached to " << pMesh.name.c_str() << "\n\nVERTEX LAYOUT: DEFAULT\n" << endl;
 
 		ProcessControlPoints(pMesh);
 
 		// Create vertex array for the current mesh
-		CreateVertexDataStandard(pMesh);
+		CreateVertexDataStandard(pMesh, pFbxRootNode);
 	}
 }
 
@@ -315,7 +319,7 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 
 		}
 
-		if (i == 1) {
+		/*if (i == 1) {
 
 			currentFilePath = "FbxModel\\wave.fbx";
 			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
@@ -328,9 +332,9 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 
 			pFbxRootNode = pScene->GetRootNode();
 
-		}
+		}*/
 
-		if (i == 2) {
+		if (i == 1) {
 
 			currentFilePath = "FbxModel\\stagger.fbx";
 			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
@@ -349,12 +353,21 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 
 	}
 
+	currentFilePath = "FbxModel\\cubes.fbx";
+	hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
+
+	if (FAILED(hr)) {
+
+		cout << "Couldn't switch back to main file " << currentFilePath << endl;
+		return false;
+	}
+
 	return true;
 }
 
 void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* scene, int animIndex) {
 
-	FbxMesh* mesh = GetMeshFromRoot(node);
+	FbxMesh* mesh = GetMeshFromRoot(node, pMesh.name);
 	unsigned int deformerCount = mesh->GetDeformerCount();	// A deformer is associated with manipulating geometry through clusters, which are the joints we're after
 
 	FbxAMatrix geometryTransform = GetGeometryTransformation(node); // Geometric offset must be taken into account, even though it's often an identity matrix
@@ -468,61 +481,151 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 	}
 }
 
-void FBXConverter::CreateVertexDataStandard(Mesh &pMesh) {
+void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) {
 
-		FbxVector4* pVertices = pMesh.meshNode->GetControlPoints();
+	if (pFbxRootNode) {
 
 		int vertexCounter = 0;
+		FbxMesh* currentMesh;
 
-		for (int j = 0; j < pMesh.meshNode->GetPolygonCount(); j++) {
+		for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {
 
-			// Retreive the size of every polygon which should be represented as a triangle
-			int iNumVertices = pMesh.meshNode->GetPolygonSize(j);	
+			currentMesh = GetMeshFromRoot(pFbxRootNode, pMesh.name);
+			FbxVector4* pVertices = currentMesh->GetControlPoints();
 
-			// Reassure that every polygon is a triangle and if not, don't allow the user to pass this point
-			assert(iNumVertices == 3);	
+			int vertexCounter = 0;
 
-			// Process every vertex in the triangle
-			for (int k = 0; k < iNumVertices; k++) {
+			for (int j = 0; j < currentMesh->GetPolygonCount(); j++) {
 
-				// Retrieve the vertex index to know which control point in the vector to use
-				int iControlPointIndex = pMesh.meshNode->GetPolygonVertex(j, k);
-				ControlPoint* currentControlPoint = pMesh.controlPoints[iControlPointIndex];
+				// Retreive the size of every polygon which should be represented as a triangle
+				int iNumVertices = currentMesh->GetPolygonSize(j);
 
-				// Initialize the vertex position from the corresponding control point in the vector
-				Vertex_Standard vertex;
-				vertex.pos = currentControlPoint->Position;	
+				// Reassure that every polygon is a triangle and if not, don't allow the user to pass this point
+				assert(iNumVertices == 3);
 
-				// Initialize texture coordinates to store in the output vertex
-				FbxVector2 FBXTexcoord;
-				bool unmapped;
-				iControlPointIndex = pMesh.meshNode->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);	
+				// Process every vertex in the triangle
+				for (int k = 0; k < iNumVertices; k++) {
 
-				vertex.uv.x = (float)FBXTexcoord.mData[0];
-				vertex.uv.y = (float)FBXTexcoord.mData[1];
-				vertex.uv.y = 1 - vertex.uv.y;
+					// Retrieve the vertex index to know which control point in the vector to use
+					int iControlPointIndex = currentMesh->GetPolygonVertex(j, k);
+					ControlPoint* currentControlPoint = pMesh.controlPoints[iControlPointIndex];
 
-				// Initialize normals to store in the output vertex
-				FbxVector4 FBXNormal;
+					// Initialize the vertex position from the corresponding control point in the vector
+					Vertex_Standard vertex;
+					vertex.pos = currentControlPoint->Position;
 
-				iControlPointIndex = pMesh.meshNode->GetPolygonVertexNormal(j, k, FBXNormal);
+					// Initialize texture coordinates to store in the output vertex
+					FbxVector2 FBXTexcoord;
+					bool unmapped;
+					iControlPointIndex = currentMesh->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);
 
-				vertex.normal.x = (float)FBXNormal.mData[0];
-				vertex.normal.y = (float)FBXNormal.mData[1];
-				vertex.normal.z = (float)FBXNormal.mData[2];
+					vertex.uv.x = (float)FBXTexcoord.mData[0];
+					vertex.uv.y = (float)FBXTexcoord.mData[1];
+					vertex.uv.y = 1 - vertex.uv.y;
 
-				// Push back vertices to the current mesh
-				pMesh.vertices.push_back(vertex);
+					// Initialize normals to store in the output vertex
+					FbxVector4 FBXNormal;
 
-				// Push back indices
-				pMesh.indices.push_back(vertexCounter);
+					iControlPointIndex = currentMesh->GetPolygonVertexNormal(j, k, FBXNormal);
 
-				vertexCounter++;
+					vertex.normal.x = (float)FBXNormal.mData[0];
+					vertex.normal.y = (float)FBXNormal.mData[1];
+					vertex.normal.z = (float)FBXNormal.mData[2];
+
+					// Push back vertices to the current mesh
+					pMesh.standardVertices.push_back(vertex);
+
+					// Push back indices
+					pMesh.indices.push_back(vertexCounter);
+
+					vertexCounter++;
+				}
 			}
+
 		}
+
+	}
 
 		
 	}
+
+void FBXConverter::CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode) {
+
+	if (pFbxRootNode) {
+
+		int vertexCounter = 0;
+		FbxMesh* currentMesh;
+
+		for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {
+
+			currentMesh = GetMeshFromRoot(pFbxRootNode, pMesh.name);
+			FbxVector4* pVertices = currentMesh->GetControlPoints();
+
+			int vertexCounter = 0;
+
+			for (int j = 0; j < currentMesh->GetPolygonCount(); j++) {
+
+				int iNumVertices = currentMesh->GetPolygonSize(j);	// Retreive the size of every polygon which should be represented as a triangle
+				assert(iNumVertices == 3);	// Reassure that every polygon is a triangle and if not, don't allow the user to pass this point
+
+				for (int k = 0; k < iNumVertices; k++) {	// Process every vertex in the triangle
+
+					int iControlPointIndex = currentMesh->GetPolygonVertex(j, k);	// Retrieve the vertex index to know which control point in the vector to use
+					ControlPoint* currentControlPoint = pMesh.controlPoints[iControlPointIndex];
+
+					Vertex_Bone vertex;
+					vertex.pos = currentControlPoint->Position;	// Initialize the vertex position from the corresponding control point in the vector
+
+					FbxVector2 FBXTexcoord;
+					bool unmapped;
+					iControlPointIndex = currentMesh->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);	// Initialize texture coordinates to store in the output vertex
+
+					vertex.uv.x = (float)FBXTexcoord.mData[0];
+					vertex.uv.y = (float)FBXTexcoord.mData[1];
+					vertex.uv.y = 1 - vertex.uv.y;
+
+					FbxVector4 FBXNormal;
+
+					iControlPointIndex = currentMesh->GetPolygonVertexNormal(j, k, FBXNormal); // Initialize normals to store in the output vertex
+
+					vertex.normal.x = (float)FBXNormal.mData[0];
+					vertex.normal.y = (float)FBXNormal.mData[1];
+					vertex.normal.z = (float)FBXNormal.mData[2];
+
+					// Retreive Blending Weight info for each vertex in the mesh
+					// Every vertex must have three weights and four influencing bone indices
+
+					vertex.weights[0] = 0.0f;
+					vertex.weights[1] = 0.0f;
+					vertex.weights[2] = 0.0f;
+					vertex.weights[3] = 0.0f;
+
+					for (unsigned int i = 0; i < currentControlPoint->BlendingInfo.size(); i++) {
+
+						VertexBlendInfo currentBlendingInfo;
+						currentBlendingInfo.BlendingIndex = currentControlPoint->BlendingInfo[i].BlendIndex;
+						currentBlendingInfo.BlendingWeight = currentControlPoint->BlendingInfo[i].BlendWeight;
+
+						// Store weight pairs in a separate blending weight vector
+
+						vertex.boneIndices[i] = currentControlPoint->BlendingInfo[i].BlendIndex;
+						vertex.weights[i] = currentControlPoint->BlendingInfo[i].BlendWeight;
+
+					}
+
+					pMesh.boneVertices.push_back(vertex);	// Store all vertices in a separate vector
+
+					pMesh.indices.push_back(vertexCounter);	// Store indices so that vertices doesn't have to be loaded twice into the pipeline
+
+					vertexCounter++;
+				}
+			}
+
+		}
+
+	}
+
+}
 
 void FBXConverter::LoadLights(FbxNode* pFbxRootNode) {
 
@@ -728,7 +831,7 @@ void FBXConverter::writeToFile()
 	
 	for (size_t i = 0; i < meshCount; i++)
 	{
-		vertexCount += this->meshes[i].vertices.size();
+		vertexCount += this->meshes[i].standardVertices.size();
 	}
 	
 	vertices* vertexData = new vertices[vertexCount];
@@ -783,7 +886,7 @@ void FBXConverter::ConvertToLeftHanded(FbxAMatrix &matrix) {
 	matrix.SetR(rotation);
 }
 
-FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node) {	// Function to receive a mesh from the root node
+FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node, string meshName) {	// Function to receive a mesh from the root node
 
 	FbxMesh* currentMesh;
 
@@ -799,6 +902,13 @@ FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node) {	// Function to receive a
 		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
 
 		if (AttributeType != FbxNodeAttribute::eMesh) {
+
+			continue;
+		}
+
+		string currentMeshName = pFbxChildNode->GetName();
+
+		if (currentMeshName != meshName) {
 
 			continue;
 		}
@@ -830,7 +940,7 @@ HRESULT FBXConverter::LoadSceneFile(const char* fileName, FbxManager* gFbxSdkMan
 		return E_FAIL;
 	}
 
-	cout << "[OK] File " << fileName << " was successfully loaded into scene " << endl;
+	cout << "[OK] File " << fileName << " was successfully loaded into scene " << "\n\n";
 
 	return true;
 }

@@ -45,7 +45,8 @@ public:
 	void LoadLights(FbxNode* pFbxRootNode);
 	void LoadCameras(FbxNode* pFbxRootNode);
 
-	void CreateVertexDataStandard(Mesh &pMesh);
+	void CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode);
+	void CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode);
 	
 	void writeToFile();
 
@@ -57,7 +58,7 @@ public:
 	unsigned int FindJointIndexByName(std::string& jointName, Skeleton skeleton);
 	void ConvertToLeftHanded(FbxAMatrix &matrix);
 	
-	FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node);
+	FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node, string meshName);
 
 	//----------------------------------------------------------------------------------------------------------------------------------//
 	// OPEN FILE FUNCTIONS
