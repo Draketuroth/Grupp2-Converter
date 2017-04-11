@@ -26,44 +26,43 @@ public:
 	FBXConverter();
 	~FBXConverter();
 
-	void ReleaseAll();
+	void ReleaseAll(FbxManager* gFbxSdkManager);
 
 	bool Load(const char *fileName);
 
-	bool LoadFBXFormat(const char *fileName);
+	bool LoadFBXFormat(const char *mainFileName);
 
-	void LoadMeshes();
+	void LoadMeshes(FbxNode* pFbxRootNode);
 	void ProcessControlPoints(Mesh &pMesh);
 	
-	void CheckSkeleton(Mesh &pMesh);
+	void CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode);
+	void LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh);
+	void RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int depth, int index, int parentIndex);
 
-	void CreateVertexData(Mesh &pMesh);
+	void LoadLights(FbxNode* pFbxRootNode);
+	void LoadCameras(FbxNode* pFbxRootNode);
 
-	void LoadLights();
-	void LoadCameras();
+	void CreateVertexDataStandard(Mesh &pMesh);
+	
 	void writeToFile();
 
-	void LoadSkeletonHierarchy(Mesh &pMesh);
-
-	void RecursiveDepthFirstSearch(Mesh &pMesh, FbxNode* node, int depth, int index, int parentIndex);
-
-	void GatherAnimationData(Mesh &pMesh);
-
+	//----------------------------------------------------------------------------------------------------------------------------------//
+	// SECONDARY FUNCTIONS
+	//----------------------------------------------------------------------------------------------------------------------------------//
 
 	FbxAMatrix GetGeometryTransformation(FbxNode* node);
 	unsigned int FindJointIndexByName(std::string& jointName, Skeleton skeleton);
-
 	void ConvertToLeftHanded(FbxAMatrix &matrix);
+	
+	FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node);
+
+	//----------------------------------------------------------------------------------------------------------------------------------//
+	// OPEN FILE FUNCTIONS
+	//----------------------------------------------------------------------------------------------------------------------------------//
+
+	HRESULT LoadSceneFile(const char* fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
 
 private:
-
-	FbxManager* gFbxSdkManager;
-	FbxIOSettings* pIOsettings;
-
-	FbxImporter* pImporter;
-	FbxScene* pFbxScene;
-
-	FbxNode* pFbxRootNode;
 
 	vector<Mesh> meshes;
 	vector<Light> lights;
