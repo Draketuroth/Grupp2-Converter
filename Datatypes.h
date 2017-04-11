@@ -45,9 +45,9 @@ struct Keyframe { // Stores the attributes of a keyframe in an animation
 
 };
 
-struct Animations {
+struct Animation {
 
-	vector<Keyframe> Animation;
+	vector<Keyframe> Sequence;
 	FbxLongLong Length;
 };
 
@@ -59,6 +59,7 @@ struct Joint { // Stores the attributes of a joint node
 	FbxAMatrix GlobalBindposeInverse;
 	FbxAMatrix TransformMatrix;
 	FbxAMatrix TransformLinkMatrix;
+	Animation Animations[3];
 
 	FbxNode* Node;
 

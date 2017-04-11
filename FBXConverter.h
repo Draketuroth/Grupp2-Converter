@@ -32,12 +32,15 @@ public:
 
 	bool LoadFBXFormat(const char *mainFileName);
 
-	void LoadMeshes(FbxNode* pFbxRootNode);
+	void LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
 	void ProcessControlPoints(Mesh &pMesh);
 	
-	void CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode);
+	void CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
 	void LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh);
 	void RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int depth, int index, int parentIndex);
+	bool LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+
+	void GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* scene, int animIndex);
 
 	void LoadLights(FbxNode* pFbxRootNode);
 	void LoadCameras(FbxNode* pFbxRootNode);
