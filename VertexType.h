@@ -23,6 +23,8 @@ struct Vertex_Bone { // Stores the attributes of a vertex such as position, uv c
 	XMFLOAT3 pos;
 	XMFLOAT2 uv;
 	XMFLOAT3 normal;
+	XMFLOAT3 BiNormal;
+	XMFLOAT3 TangentNormal;
 	float weights[4];
 	UINT boneIndices[4];
 
