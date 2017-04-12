@@ -94,6 +94,9 @@ struct Texture{
 struct Material
 {
 	string materialName;
+	XMFLOAT3 diffuseColor;
+	XMFLOAT3 ambientColor;
+	string materialType;
 
 	Texture texture;
 	

@@ -180,8 +180,15 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 				<< meshes[i].rotation.x << ", "
 				<< meshes[i].rotation.y << ", "
 				<< meshes[i].rotation.z << "}\nVertices: "
-				<< meshes[i].controlPoints.size() << "\nMaterial "
-				<< meshes[i].objectMaterial.materialName.c_str() << "\nScale: {"
+				<< meshes[i].controlPoints.size() << "\nMaterial: "
+				<< meshes[i].objectMaterial.materialName.c_str() << "\nType: "
+					<< meshes[i].objectMaterial.materialType.c_str() << "\nDiffuse: "
+					<< meshes[i].objectMaterial.diffuseColor.x << ", " 
+					<< meshes[i].objectMaterial.diffuseColor.y << ", "
+					<< meshes[i].objectMaterial.diffuseColor.z <<"\nAmbient: "
+					<< meshes[i].objectMaterial.ambientColor.x << ", "
+					<< meshes[i].objectMaterial.ambientColor.y << ", "
+					<< meshes[i].objectMaterial.ambientColor.z << "\nScale: {"
 				<< meshes[i].meshScale.x << ", "
 				<< meshes[i].meshScale.y << ", "
 				<< meshes[i].meshScale.z << "}\n\n";
@@ -805,7 +812,46 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 		// Set the material name for the current mesh's material
 		pMesh.objectMaterial.materialName = surfaceMaterial->GetName();
 
-		//if(surfaceMaterial)
+		if (surfaceMaterial->GetClassId() == FbxSurfaceLambert::ClassId) {
+
+			pMesh.objectMaterial.materialType == "Lambert";
+
+			FbxSurfaceLambert* lambertMaterial = (FbxSurfaceLambert*)surfaceMaterial;
+			FbxPropertyT<FbxDouble3> lambertDiffuse = lambertMaterial->Diffuse;
+			FbxPropertyT<FbxDouble3> lambertAmbient = lambertMaterial->Ambient;
+			
+			FbxDouble3 lambertDiffuseInfo = lambertDiffuse.Get();
+			FbxDouble3 lambertAmbientInfo = lambertAmbient.Get();
+
+			pMesh.objectMaterial.diffuseColor.x = lambertDiffuseInfo.mData[0];
+			pMesh.objectMaterial.diffuseColor.y = lambertDiffuseInfo.mData[1];
+			pMesh.objectMaterial.diffuseColor.z = lambertDiffuseInfo.mData[2];
+
+			pMesh.objectMaterial.ambientColor.x = lambertAmbientInfo.mData[0];
+			pMesh.objectMaterial.ambientColor.y = lambertAmbientInfo.mData[1];
+			pMesh.objectMaterial.ambientColor.z = lambertAmbientInfo.mData[2];
+		}
+
+		else if (surfaceMaterial->GetClassId() == FbxSurfacePhong::ClassId) {
+
+			pMesh.objectMaterial.materialType == "Phong";
+
+			FbxSurfacePhong* phongMaterial = (FbxSurfacePhong*)surfaceMaterial;
+			FbxPropertyT<FbxDouble3> phongDiffuse = phongMaterial->Diffuse;
+			FbxPropertyT<FbxDouble3> phongAmbient = phongMaterial->Ambient;
+
+			FbxDouble3 phongDiffuseInfo = phongDiffuse.Get();
+			FbxDouble3 phongAmbientInfo = phongAmbient.Get();
+
+			pMesh.objectMaterial.diffuseColor.x = phongDiffuseInfo.mData[0];
+			pMesh.objectMaterial.diffuseColor.y = phongDiffuseInfo.mData[1];
+			pMesh.objectMaterial.diffuseColor.z = phongDiffuseInfo.mData[2];
+
+			pMesh.objectMaterial.ambientColor.x = phongAmbientInfo.mData[0];
+			pMesh.objectMaterial.ambientColor.y = phongAmbientInfo.mData[1];
+			pMesh.objectMaterial.ambientColor.z = phongAmbientInfo.mData[2];
+
+		}
 
 		// Get the texture on the diffuse material property
 		FbxProperty materialProperty = surfaceMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
