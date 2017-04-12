@@ -856,7 +856,7 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 			FbxSurfacePhong* phongMaterial = (FbxSurfacePhong*)surfaceMaterial;
 			FbxPropertyT<FbxDouble3> phongDiffuse = phongMaterial->Diffuse;
 			FbxPropertyT<FbxDouble3> phongAmbient = phongMaterial->Ambient;
-			FbxPropertyT<FbxDouble3> phongSpecular = phongMaterial->Emissive;
+			FbxPropertyT<FbxDouble3> phongSpecular = phongMaterial->Specular;
 
 			FbxDouble3 phongDiffuseInfo = phongDiffuse.Get();
 			FbxDouble3 phongAmbientInfo = phongAmbient.Get();
