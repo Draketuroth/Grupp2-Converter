@@ -799,18 +799,25 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 	for (int i = 0; i < materialCount; i++) {
 
+		// Get the material node
 		surfaceMaterial = materialNode->GetMaterial(i);
 
+		// Set the material name for the current mesh's material
 		pMesh.objectMaterial.materialName = surfaceMaterial->GetName();
+
+		//if(surfaceMaterial)
 
 		// Get the texture on the diffuse material property
 		FbxProperty materialProperty = surfaceMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
 
+		// Look if any textures are attached (currently just on the diffuse channel) 
 		int textureCount = materialProperty.GetSrcObjectCount<FbxTexture>();
 
 		for (int j = 0; j < textureCount; j++) {
 
-			const FbxTexture* texture = FbxCast<FbxTexture>(materialProperty.GetSrcObject<FbxTexture>(j));
+			const FbxTexture* materialTexture = FbxCast<FbxTexture>(materialProperty.GetSrcObject<FbxTexture>(j));
+
+			pMesh.objectMaterial.texture.textureName = materialTexture->GetName();
 		}
 
 	}

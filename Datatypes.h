@@ -94,6 +94,8 @@ struct Texture{
 struct Material
 {
 	string materialName;
+
+	Texture texture;
 	
 };
 
