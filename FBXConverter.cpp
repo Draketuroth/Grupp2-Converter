@@ -185,24 +185,24 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 					<< meshes[i].meshScale.x << ", "
 					<< meshes[i].meshScale.y << ", "
 					<< meshes[i].meshScale.z << "}\nVertices: "
-					<< meshes[i].controlPoints.size() << "\nMaterial: "
+					<< meshes[i].controlPoints.size() << "\n\nMaterial: "
 					<< meshes[i].objectMaterial.materialName.c_str() << "\nType: "
 
 					// MATERIAL
 
-					<< meshes[i].objectMaterial.materialType.c_str() << "\nDiffuse: "
+					<< meshes[i].objectMaterial.materialType.c_str() << "\n\nDiffuse: "
 					<< meshes[i].objectMaterial.diffuseColor.x << ", "
 					<< meshes[i].objectMaterial.diffuseColor.y << ", "
 					<< meshes[i].objectMaterial.diffuseColor.z << "\nDiffuse Factor: "
-					<< meshes[i].objectMaterial.diffuseFactor << "\nAmbient: "
+					<< meshes[i].objectMaterial.diffuseFactor << "\n\nAmbient: "
 					<< meshes[i].objectMaterial.ambientColor.x << ", "
 					<< meshes[i].objectMaterial.ambientColor.y << ", "
 					<< meshes[i].objectMaterial.ambientColor.z << "\nAmbient Factor: "
-					<< meshes[i].objectMaterial.ambientFactor << "\nSpecular: "
+					<< meshes[i].objectMaterial.ambientFactor << "\n\nSpecular: "
 					<< meshes[i].objectMaterial.specularColor.x << ", "
 					<< meshes[i].objectMaterial.specularColor.y << ", "
 					<< meshes[i].objectMaterial.specularColor.z << "\nSpecular Factor: "
-					<< meshes[i].objectMaterial.specularFactor << "\nTexture Name: "
+					<< meshes[i].objectMaterial.specularFactor << "\n\nTexture Name: "
 
 					// TEXTURE
 
