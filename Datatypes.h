@@ -96,12 +96,16 @@ struct Material
 {
 	string materialName;
 	XMFLOAT3 diffuseColor;
-	XMFLOAT3 ambientColor;
-	XMFLOAT3 specularColor;
-	string materialType;
+	float diffuseFactor;
 
+	XMFLOAT3 ambientColor;
+	float ambientFactor;
+
+	XMFLOAT3 specularColor;
+	float specularFactor;
+
+	string materialType;
 	Texture diffuseTexture;
-	
 };
 
 struct ControlPoint { // Resembles a physical vertex point in the FBX SDK

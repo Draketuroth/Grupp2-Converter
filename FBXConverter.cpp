@@ -193,13 +193,16 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 					<< meshes[i].objectMaterial.materialType.c_str() << "\nDiffuse: "
 					<< meshes[i].objectMaterial.diffuseColor.x << ", "
 					<< meshes[i].objectMaterial.diffuseColor.y << ", "
-					<< meshes[i].objectMaterial.diffuseColor.z << "\nAmbient: "
+					<< meshes[i].objectMaterial.diffuseColor.z << "\nDiffuse Factor: "
+					<< meshes[i].objectMaterial.diffuseFactor << "\nAmbient: "
 					<< meshes[i].objectMaterial.ambientColor.x << ", "
 					<< meshes[i].objectMaterial.ambientColor.y << ", "
-					<< meshes[i].objectMaterial.ambientColor.z << "\nSpecular: "
+					<< meshes[i].objectMaterial.ambientColor.z << "\nAmbient Factor: "
+					<< meshes[i].objectMaterial.ambientFactor << "\nSpecular: "
 					<< meshes[i].objectMaterial.specularColor.x << ", "
 					<< meshes[i].objectMaterial.specularColor.y << ", "
-					<< meshes[i].objectMaterial.specularColor.z << "\nTexture Name: "
+					<< meshes[i].objectMaterial.specularColor.z << "\nSpecular Factor: "
+					<< meshes[i].objectMaterial.specularFactor << "\nTexture Name: "
 
 					// TEXTURE
 
@@ -840,13 +843,19 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 			pMesh.objectMaterial.diffuseColor.y = lambertDiffuseInfo.mData[1];
 			pMesh.objectMaterial.diffuseColor.z = lambertDiffuseInfo.mData[2];
 
+			pMesh.objectMaterial.diffuseFactor = lambertMaterial->DiffuseFactor;
+
 			pMesh.objectMaterial.ambientColor.x = lambertAmbientInfo.mData[0];
 			pMesh.objectMaterial.ambientColor.y = lambertAmbientInfo.mData[1];
 			pMesh.objectMaterial.ambientColor.z = lambertAmbientInfo.mData[2];
 
+			pMesh.objectMaterial.ambientFactor = lambertMaterial->AmbientFactor;
+
 			pMesh.objectMaterial.specularColor.x = 0.0f;
 			pMesh.objectMaterial.specularColor.y = 0.0f;
 			pMesh.objectMaterial.specularColor.z = 0.0f;
+
+			pMesh.objectMaterial.specularFactor = 0.0f;
 		}
 
 		else if (surfaceMaterial->GetClassId() == FbxSurfacePhong::ClassId) {
@@ -866,13 +875,19 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 			pMesh.objectMaterial.diffuseColor.y = phongDiffuseInfo.mData[1];
 			pMesh.objectMaterial.diffuseColor.z = phongDiffuseInfo.mData[2];
 
+			pMesh.objectMaterial.diffuseFactor = phongMaterial->DiffuseFactor;
+
 			pMesh.objectMaterial.ambientColor.x = phongAmbientInfo.mData[0];
 			pMesh.objectMaterial.ambientColor.y = phongAmbientInfo.mData[1];
 			pMesh.objectMaterial.ambientColor.z = phongAmbientInfo.mData[2];
 
+			pMesh.objectMaterial.ambientFactor = phongMaterial->AmbientFactor;
+
 			pMesh.objectMaterial.specularColor.x = phongSpecularInfo.mData[0];
 			pMesh.objectMaterial.specularColor.y = phongSpecularInfo.mData[1];
 			pMesh.objectMaterial.specularColor.z = phongSpecularInfo.mData[2];
+
+			pMesh.objectMaterial.specularFactor = phongMaterial->Shininess;
 
 		}
 
