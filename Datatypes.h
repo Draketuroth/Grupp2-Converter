@@ -89,6 +89,7 @@ struct BlendingIndexWeightPair { // Middle hand container to help with passing V
 struct Texture{
 
 	string textureName;
+	string texturePath;
 };
 
 struct Material
@@ -96,9 +97,10 @@ struct Material
 	string materialName;
 	XMFLOAT3 diffuseColor;
 	XMFLOAT3 ambientColor;
+	XMFLOAT3 specularColor;
 	string materialType;
 
-	Texture texture;
+	Texture diffuseTexture;
 	
 };
 

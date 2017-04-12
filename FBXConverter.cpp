@@ -173,25 +173,38 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 
 				CheckSkeleton(meshes[i], pFbxRootNode, gFbxSdkManager, pImporter, pScene);
 
+				// MESH
+
 				cout << "Name: " << meshes[i].name.c_str() << "\nPosition: {"
-				<< meshes[i].position.x << ", "
-				<< meshes[i].position.y << ", "
-				<< meshes[i].position.z << "}\nRotation: {"
-				<< meshes[i].rotation.x << ", "
-				<< meshes[i].rotation.y << ", "
-				<< meshes[i].rotation.z << "}\nVertices: "
-				<< meshes[i].controlPoints.size() << "\nMaterial: "
-				<< meshes[i].objectMaterial.materialName.c_str() << "\nType: "
+					<< meshes[i].position.x << ", "
+					<< meshes[i].position.y << ", "
+					<< meshes[i].position.z << "}\nRotation: {"
+					<< meshes[i].rotation.x << ", "
+					<< meshes[i].rotation.y << ", "
+					<< meshes[i].rotation.z << "}\nScale: {"
+					<< meshes[i].meshScale.x << ", "
+					<< meshes[i].meshScale.y << ", "
+					<< meshes[i].meshScale.z << "}\nVertices: "
+					<< meshes[i].controlPoints.size() << "\nMaterial: "
+					<< meshes[i].objectMaterial.materialName.c_str() << "\nType: "
+
+					// MATERIAL
+
 					<< meshes[i].objectMaterial.materialType.c_str() << "\nDiffuse: "
-					<< meshes[i].objectMaterial.diffuseColor.x << ", " 
+					<< meshes[i].objectMaterial.diffuseColor.x << ", "
 					<< meshes[i].objectMaterial.diffuseColor.y << ", "
-					<< meshes[i].objectMaterial.diffuseColor.z <<"\nAmbient: "
+					<< meshes[i].objectMaterial.diffuseColor.z << "\nAmbient: "
 					<< meshes[i].objectMaterial.ambientColor.x << ", "
 					<< meshes[i].objectMaterial.ambientColor.y << ", "
-					<< meshes[i].objectMaterial.ambientColor.z << "\nScale: {"
-				<< meshes[i].meshScale.x << ", "
-				<< meshes[i].meshScale.y << ", "
-				<< meshes[i].meshScale.z << "}\n\n";
+					<< meshes[i].objectMaterial.ambientColor.z << "\nSpecular: "
+					<< meshes[i].objectMaterial.specularColor.x << ", "
+					<< meshes[i].objectMaterial.specularColor.y << ", "
+					<< meshes[i].objectMaterial.specularColor.z << "\nTexture Name: "
+
+					// TEXTURE
+
+					<< meshes[i].objectMaterial.diffuseTexture.textureName.c_str() << "\nTexture Path: "
+					<< meshes[i].objectMaterial.diffuseTexture.texturePath.c_str() << "\n\n";
 	}
 }
 
@@ -814,7 +827,7 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 		if (surfaceMaterial->GetClassId() == FbxSurfaceLambert::ClassId) {
 
-			pMesh.objectMaterial.materialType == "Lambert";
+			pMesh.objectMaterial.materialType = "Lambert";
 
 			FbxSurfaceLambert* lambertMaterial = (FbxSurfaceLambert*)surfaceMaterial;
 			FbxPropertyT<FbxDouble3> lambertDiffuse = lambertMaterial->Diffuse;
@@ -830,18 +843,24 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 			pMesh.objectMaterial.ambientColor.x = lambertAmbientInfo.mData[0];
 			pMesh.objectMaterial.ambientColor.y = lambertAmbientInfo.mData[1];
 			pMesh.objectMaterial.ambientColor.z = lambertAmbientInfo.mData[2];
+
+			pMesh.objectMaterial.specularColor.x = 0.0f;
+			pMesh.objectMaterial.specularColor.y = 0.0f;
+			pMesh.objectMaterial.specularColor.z = 0.0f;
 		}
 
 		else if (surfaceMaterial->GetClassId() == FbxSurfacePhong::ClassId) {
-
-			pMesh.objectMaterial.materialType == "Phong";
+;
+			pMesh.objectMaterial.materialType = "Phong";
 
 			FbxSurfacePhong* phongMaterial = (FbxSurfacePhong*)surfaceMaterial;
 			FbxPropertyT<FbxDouble3> phongDiffuse = phongMaterial->Diffuse;
 			FbxPropertyT<FbxDouble3> phongAmbient = phongMaterial->Ambient;
+			FbxPropertyT<FbxDouble3> phongSpecular = phongMaterial->Emissive;
 
 			FbxDouble3 phongDiffuseInfo = phongDiffuse.Get();
 			FbxDouble3 phongAmbientInfo = phongAmbient.Get();
+			FbxDouble3 phongSpecularInfo = phongSpecular.Get();
 
 			pMesh.objectMaterial.diffuseColor.x = phongDiffuseInfo.mData[0];
 			pMesh.objectMaterial.diffuseColor.y = phongDiffuseInfo.mData[1];
@@ -851,20 +870,59 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 			pMesh.objectMaterial.ambientColor.y = phongAmbientInfo.mData[1];
 			pMesh.objectMaterial.ambientColor.z = phongAmbientInfo.mData[2];
 
+			pMesh.objectMaterial.specularColor.x = phongSpecularInfo.mData[0];
+			pMesh.objectMaterial.specularColor.y = phongSpecularInfo.mData[1];
+			pMesh.objectMaterial.specularColor.z = phongSpecularInfo.mData[2];
+
 		}
 
 		// Get the texture on the diffuse material property
 		FbxProperty materialProperty = surfaceMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
 
+		// Look if any layered textures are attached (currently just on the diffuse channel) 
+		int layeredTextureCount = materialProperty.GetSrcObjectCount<FbxLayeredTexture>();
+
+		if (layeredTextureCount > 0){
+			for (int j = 0; j < layeredTextureCount; j++)
+			{
+				FbxLayeredTexture* layered_texture = FbxCast<FbxLayeredTexture>(materialProperty.GetSrcObject<FbxLayeredTexture>(j));
+				int lcount = layered_texture->GetSrcObjectCount<FbxTexture>();
+
+				for (int k = 0; k < lcount; k++)
+				{
+					FbxTexture* layeredMaterialTexture = FbxCast<FbxTexture>(layered_texture->GetSrcObject<FbxTexture>(k));
+
+				}
+			}
+		}
+
+		else{
+
 		// Look if any textures are attached (currently just on the diffuse channel) 
 		int textureCount = materialProperty.GetSrcObjectCount<FbxTexture>();
 
-		for (int j = 0; j < textureCount; j++) {
+		if(textureCount > 0){
 
-			const FbxTexture* materialTexture = FbxCast<FbxTexture>(materialProperty.GetSrcObject<FbxTexture>(j));
+			for (int j = 0; j < textureCount; j++) {
 
-			pMesh.objectMaterial.texture.textureName = materialTexture->GetName();
+				FbxTexture* materialTexture = FbxCast<FbxTexture>(materialProperty.GetSrcObject<FbxTexture>(j));
+
+				pMesh.objectMaterial.diffuseTexture.textureName = materialTexture->GetName();
+
+				FbxFileTexture* textureFile = (FbxFileTexture*)materialTexture;
+
+				pMesh.objectMaterial.diffuseTexture.texturePath = textureFile->GetFileName();
+			}
+
 		}
+
+		else {
+
+			pMesh.objectMaterial.diffuseTexture.textureName = "No texture attached to this channel";
+			pMesh.objectMaterial.diffuseTexture.texturePath = "No texture attached to this channel";
+		}
+
+	}
 
 	}
 }
