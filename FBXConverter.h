@@ -49,6 +49,8 @@ public:
 
 	void CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode);
 	void CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode);
+
+	void LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh);
 	
 	void writeToFile();
 

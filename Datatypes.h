@@ -86,9 +86,14 @@ struct BlendingIndexWeightPair { // Middle hand container to help with passing V
 	{}
 };
 
+struct Texture{
+
+	string textureName;
+};
+
 struct Material
 {
-	FbxSurfaceMaterial* meshMaterial;
+	string materialName;
 	
 };
 

@@ -158,13 +158,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		currentMesh.meshScale.y = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[1];
 		currentMesh.meshScale.z = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[2];
 
-		FbxLayerElementMaterial* layerElement;
-		layerElement = currentMesh.meshNode->GetElementMaterial();
-		if (layerElement->GetMappingMode() == FbxLayerElement::eAllSame)
-		{
-			int index = layerElement->GetIndexArray()[0];
-			currentMesh.objectMaterial.meshMaterial = pFbxChildNode->GetMaterial(index);
-		}
+		LoadMaterial(currentMesh.meshNode, currentMesh);
 
 		meshes.push_back(currentMesh);
 	}
@@ -187,7 +181,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 				<< meshes[i].rotation.y << ", "
 				<< meshes[i].rotation.z << "}\nVertices: "
 				<< meshes[i].controlPoints.size() << "\nMaterial "
-				<< meshes[i].objectMaterial.meshMaterial->GetName() << "\nScale: {"
+				<< meshes[i].objectMaterial.materialName.c_str() << "\nScale: {"
 				<< meshes[i].meshScale.x << ", "
 				<< meshes[i].meshScale.y << ", "
 				<< meshes[i].meshScale.z << "}\n\n";
@@ -645,15 +639,9 @@ void FBXConverter::CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode) {
 				continue;
 			}
 
-			FbxLayerElementMaterial* layerElement;
-			layerElement = currentMesh->GetElementMaterial();
-			if (layerElement->GetMappingMode() == FbxLayerElement::eAllSame)
-			{
-				int index = layerElement->GetIndexArray()[0];
-				pMesh.objectMaterial.meshMaterial = pFbxChildNode->GetMaterial(index);
-			}
-
 		}
+
+		LoadMaterial(currentMesh, pMesh);
 
 		for (int j = 0; j < currentMesh->GetPolygonCount(); j++) {
 
@@ -799,6 +787,33 @@ void FBXConverter::CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode) {
 
 	}
 
+}
+
+void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
+
+	FbxSurfaceMaterial* surfaceMaterial;
+	FbxNode* materialNode;
+		
+	materialNode = currentMesh->GetNode();
+	int materialCount = materialNode->GetMaterialCount();
+
+	for (int i = 0; i < materialCount; i++) {
+
+		surfaceMaterial = materialNode->GetMaterial(i);
+
+		pMesh.objectMaterial.materialName = surfaceMaterial->GetName();
+
+		// Get the texture on the diffuse material property
+		FbxProperty materialProperty = surfaceMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
+
+		int textureCount = materialProperty.GetSrcObjectCount<FbxTexture>();
+
+		for (int j = 0; j < textureCount; j++) {
+
+			const FbxTexture* texture = FbxCast<FbxTexture>(materialProperty.GetSrcObject<FbxTexture>(j));
+		}
+
+	}
 }
 
 void FBXConverter::LoadLights(FbxNode* pFbxRootNode) {
