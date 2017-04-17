@@ -1134,26 +1134,93 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 
 void FBXConverter::writeToFile()
 {
-	ofstream out("vertexdata.txt");
+	//------------------------------------------------------//
+	// HEADER
+	//------------------------------------------------------//
+	// Create the binary file
+	ofstream out("vertexdata.txt", std::ios::binary);
+	uint32_t nrOfMeshes, nrOfCameras, nrOfLights;
+	uint32_t byteOffset = 0;
+
+	// uint32_t are for bytes each
+	nrOfMeshes = meshes.size(); // 4
+	nrOfCameras = cameras.size(); // 8
+	nrOfLights = lights.size(); // 12
+
+	// First 12 bytes holds the main header content
+	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights);
+
+	out << (char)byteOffset << "\n";
+
+	out << (char)nrOfMeshes << "\n";
+	out << (char)nrOfCameras << "\n";
+	out << (char)nrOfLights << "\n";
+
+	//------------------------------------------------------//
+	// MESH HEADER FILE
+	//------------------------------------------------------//
+
+	for(int i = 0; i < meshes.size(); i++){
+
+		// Add byte offset for the next mesh
+		byteOffset += sizeof(Vertex) * this->meshes[i].standardVertices.size();
+		out << (char)byteOffset << "\n";
+
+		int vertexCount = this->meshes[i].standardVertices.size();
+		float meshPosition[3];
+		float meshRotation[3];
+		float meshScale[3];
+
+		meshPosition[0] = this->meshes[i].position.x;
+		meshPosition[1] = this->meshes[i].position.y;
+		meshPosition[2] = this->meshes[i].position.z;
+
+		meshRotation[0] = this->meshes[i].rotation.x;
+		meshRotation[1] = this->meshes[i].rotation.y;
+		meshRotation[2] = this->meshes[i].rotation.z;
+
+		meshScale[0] = this->meshes[i].meshScale.x;
+		meshScale[1] = this->meshes[i].meshScale.y;
+		meshScale[2] = this->meshes[i].meshScale.z;
 	
-	struct vertices
-	{
-		float pos[3];
-	};
-	
-	const static int meshCount = this->meshes.size();
-	int vertexCount = 0;
-	
-	for (size_t i = 0; i < meshCount; i++)
-	{
-		vertexCount += this->meshes[i].standardVertices.size();
+		vector<Vertex> vertices;
+
+		for (int j = 0; j < vertexCount; j++) {
+
+			Vertex vertexData;
+
+			// Position
+			vertexData.pos[0] = this->meshes[i].standardVertices[j].pos.x;
+			vertexData.pos[1] = this->meshes[i].standardVertices[j].pos.y;
+			vertexData.pos[2] = this->meshes[i].standardVertices[j].pos.z;
+
+			// UV-coordinates
+			vertexData.uv[0] = this->meshes[i].standardVertices[j].uv.x;
+			vertexData.uv[1] = this->meshes[i].standardVertices[j].uv.y;
+
+			// Normals
+			vertexData.normal[0] = this->meshes[i].standardVertices[j].normal.x;
+			vertexData.normal[1] = this->meshes[i].standardVertices[j].normal.y;
+			vertexData.normal[2] = this->meshes[i].standardVertices[j].normal.z;
+
+			// Binormal
+			vertexData.binormal[0] = this->meshes[i].standardVertices[j].BiNormal.x;
+			vertexData.binormal[1] = this->meshes[i].standardVertices[j].BiNormal.y;
+			vertexData.binormal[2] = this->meshes[i].standardVertices[j].BiNormal.z;
+
+			// Tangent
+			vertexData.tangent[0] = this->meshes[i].standardVertices[j].TangentNormal.x;
+			vertexData.tangent[1] = this->meshes[i].standardVertices[j].TangentNormal.y;
+			vertexData.tangent[2] = this->meshes[i].standardVertices[j].TangentNormal.z;
+
+			vertices.push_back(vertexData);
 	}
-	
-	vertices* vertexData = new vertices[vertexCount];
 
+	out.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
 
+	}
 
-
+	out.close();
 
 }
 

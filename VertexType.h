@@ -9,6 +9,10 @@
 using namespace std;
 using namespace DirectX;
 
+//----------------------------------------------------------------------------------------------------------------------------------//
+// FBX SDK VERTEX TYPES
+//----------------------------------------------------------------------------------------------------------------------------------//
+
 struct Vertex_Standard { // Stores the attributes of a vertex such as position, uv coordinates and normals
 
 	XMFLOAT3 pos;
@@ -30,5 +34,18 @@ struct Vertex_Bone { // Stores the attributes of a vertex such as position, uv c
 
 };
 
+//----------------------------------------------------------------------------------------------------------------------------------//
+// EXPORTER VERTEX TYPES
+//----------------------------------------------------------------------------------------------------------------------------------//
+
+struct Vertex
+{
+	float pos[3];
+	float uv[2];
+	float normal[3];
+	float binormal[3];
+	float tangent[3];
+
+};
 
 #endif
