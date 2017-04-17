@@ -135,6 +135,7 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 	XMFLOAT3 rotation;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
 	Skeleton skeleton;
+	int vertexLayout;
 	vector<Vertex_Standard>standardVertices;
 	vector<Vertex_Bone>boneVertices;
 	vector<int>indices;

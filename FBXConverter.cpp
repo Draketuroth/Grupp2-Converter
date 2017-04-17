@@ -240,6 +240,8 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 	
 	if (deformerCount > 0) {
 
+		pMesh.vertexLayout = 1;
+
 		cout << "[DEFORMER FOUND] Found a joint hierarchy attached to " << pMesh.name.c_str() << "\n\nVERTEX LAYOUT: SKELETAL\n" << endl;
 
 		LoadSkeletonHierarchy(pFbxRootNode, pMesh);
@@ -256,6 +258,8 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 	}
 
 	else {
+
+		pMesh.vertexLayout = 0;
 
 		cout << "[NO DEFORMER] No hierarchy was attached to " << pMesh.name.c_str() << "\n\nVERTEX LAYOUT: DEFAULT\n" << endl;
 
@@ -1138,7 +1142,11 @@ void FBXConverter::writeToFile()
 	// HEADER
 	//------------------------------------------------------//
 	// Create the binary file
-	ofstream out("vertexdata.txt", std::ios::binary);
+	ofstream outBinary("vertexBinaryData.txt", std::ios::binary);
+	ofstream outASCII("vertexASCIIData.txt", std::ios::out);
+
+	outASCII << "--------------------------------------------------HEADER--------------------------------------------------" << endl;
+	
 	uint32_t nrOfMeshes, nrOfCameras, nrOfLights;
 	uint32_t byteOffset = 0;
 
@@ -1150,11 +1158,17 @@ void FBXConverter::writeToFile()
 	// First 12 bytes holds the main header content
 	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights);
 
-	out << (char)byteOffset << "\n";
+	outBinary << (char)byteOffset << "\n";
+	outASCII << "Header Byte Offset: " << byteOffset + 4 << endl;
 
-	out << (char)nrOfMeshes << "\n";
-	out << (char)nrOfCameras << "\n";
-	out << (char)nrOfLights << "\n";
+	outBinary << (char)nrOfMeshes << "\n";
+	outASCII << "Meshes: " << nrOfMeshes << endl;
+
+	outBinary << (char)nrOfCameras << "\n";
+	outASCII << "Cameras: " << nrOfCameras << endl;
+
+	outBinary << (char)nrOfLights << "\n";
+	outASCII << "Lights: " << nrOfLights << endl;
 
 	//------------------------------------------------------//
 	// MESH HEADER FILE
@@ -1162,65 +1176,185 @@ void FBXConverter::writeToFile()
 
 	for(int i = 0; i < meshes.size(); i++){
 
-		// Add byte offset for the next mesh
-		byteOffset += sizeof(Vertex) * this->meshes[i].standardVertices.size();
-		out << (char)byteOffset << "\n";
+		outASCII << "--------------------------------------------------" << meshes[i].name.c_str() << " MESH" << "--------------------------------------------------" << endl;
 
-		int vertexCount = this->meshes[i].standardVertices.size();
+		// Add byte offset for the mesh position, rotation and scale
+		outASCII << "Mesh Properties Byte Start: " << byteOffset + 4 << endl;
+		byteOffset += sizeof(float) * 9;
+		outBinary << (char)byteOffset << "\n";
+		outASCII << "Mesh Properties Byte Offset: " << byteOffset + 4 << endl;
+		outASCII << "Mesh Properties Byte Size: " << byteOffset << "\n\n";
+
 		float meshPosition[3];
 		float meshRotation[3];
 		float meshScale[3];
 
 		meshPosition[0] = this->meshes[i].position.x;
+		outBinary << (char)meshPosition[0];
 		meshPosition[1] = this->meshes[i].position.y;
+		outBinary << (char)meshPosition[1];
 		meshPosition[2] = this->meshes[i].position.z;
+		outBinary << (char)meshPosition[2];
+
+		outASCII << "Position: " << meshPosition[0] << ", " << meshPosition[1] << ", " << meshPosition[2] << endl;
 
 		meshRotation[0] = this->meshes[i].rotation.x;
+		outBinary << (char)meshRotation[0];
 		meshRotation[1] = this->meshes[i].rotation.y;
+		outBinary << (char)meshRotation[1];
 		meshRotation[2] = this->meshes[i].rotation.z;
+		outBinary << (char)meshRotation[2];
+
+		outASCII << "Rotation: " << meshRotation[0] << ", " << meshRotation[1] << ", " << meshRotation[2] << endl;
 
 		meshScale[0] = this->meshes[i].meshScale.x;
+		outBinary << (char)meshScale[0];
 		meshScale[1] = this->meshes[i].meshScale.y;
+		outBinary << (char)meshScale[1];
 		meshScale[2] = this->meshes[i].meshScale.z;
-	
-		vector<Vertex> vertices;
+		outBinary << (char)meshScale[2];
 
-		for (int j = 0; j < vertexCount; j++) {
+		outASCII << "Scale: " << meshScale[0] << ", " << meshScale[1] << ", " << meshScale[2] << endl;
 
-			Vertex vertexData;
+		if(meshes[i].vertexLayout == 0){
 
-			// Position
-			vertexData.pos[0] = this->meshes[i].standardVertices[j].pos.x;
-			vertexData.pos[1] = this->meshes[i].standardVertices[j].pos.y;
-			vertexData.pos[2] = this->meshes[i].standardVertices[j].pos.z;
+			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
 
-			// UV-coordinates
-			vertexData.uv[0] = this->meshes[i].standardVertices[j].uv.x;
-			vertexData.uv[1] = this->meshes[i].standardVertices[j].uv.y;
+			outASCII << "Vertices Byte Start: " << byteOffset + 4 << endl;
+			byteOffset += sizeof(Vertex) * this->meshes[i].standardVertices.size();
+			outBinary << (char)byteOffset << "\n";
+			outASCII << "Vertices Byte Offset: " << byteOffset + 4 << endl;
+			outASCII << "Vertices Byte Size: " << byteOffset << "\n\n";
 
-			// Normals
-			vertexData.normal[0] = this->meshes[i].standardVertices[j].normal.x;
-			vertexData.normal[1] = this->meshes[i].standardVertices[j].normal.y;
-			vertexData.normal[2] = this->meshes[i].standardVertices[j].normal.z;
+			int vertexCount = this->meshes[i].standardVertices.size();
 
-			// Binormal
-			vertexData.binormal[0] = this->meshes[i].standardVertices[j].BiNormal.x;
-			vertexData.binormal[1] = this->meshes[i].standardVertices[j].BiNormal.y;
-			vertexData.binormal[2] = this->meshes[i].standardVertices[j].BiNormal.z;
+			vector<Vertex> vertices;
 
-			// Tangent
-			vertexData.tangent[0] = this->meshes[i].standardVertices[j].TangentNormal.x;
-			vertexData.tangent[1] = this->meshes[i].standardVertices[j].TangentNormal.y;
-			vertexData.tangent[2] = this->meshes[i].standardVertices[j].TangentNormal.z;
+			for (int j = 0; j < vertexCount; j++) {
 
-			vertices.push_back(vertexData);
+				Vertex vertexData;
+
+				// Position
+				vertexData.pos[0] = this->meshes[i].standardVertices[j].pos.x;
+				vertexData.pos[1] = this->meshes[i].standardVertices[j].pos.y;
+				vertexData.pos[2] = this->meshes[i].standardVertices[j].pos.z;
+
+				outASCII << "Position: " << vertexData.pos[0] << ", " << vertexData.pos[1] << ", " << vertexData.pos[2] << endl;
+
+				// UV-coordinates
+				vertexData.uv[0] = this->meshes[i].standardVertices[j].uv.x;
+				vertexData.uv[1] = this->meshes[i].standardVertices[j].uv.y;
+
+				outASCII << "UV-Coordinates: " << vertexData.uv[0] << ", " << vertexData.uv[1] << endl;
+
+				// Normals
+				vertexData.normal[0] = this->meshes[i].standardVertices[j].normal.x;
+				vertexData.normal[1] = this->meshes[i].standardVertices[j].normal.y;
+				vertexData.normal[2] = this->meshes[i].standardVertices[j].normal.z;
+
+				outASCII << "Normal: " << vertexData.normal[0] << ", " << vertexData.normal[1] << ", " << vertexData.normal[2] << endl;
+
+				// Binormal
+				vertexData.binormal[0] = this->meshes[i].standardVertices[j].BiNormal.x;
+				vertexData.binormal[1] = this->meshes[i].standardVertices[j].BiNormal.y;
+				vertexData.binormal[2] = this->meshes[i].standardVertices[j].BiNormal.z;
+
+				outASCII << "Binormal: " << vertexData.binormal[0] << ", " << vertexData.binormal[1] << ", " << vertexData.binormal[2] << endl;
+
+				// Tangent
+				vertexData.tangent[0] = this->meshes[i].standardVertices[j].TangentNormal.x;
+				vertexData.tangent[1] = this->meshes[i].standardVertices[j].TangentNormal.y;
+				vertexData.tangent[2] = this->meshes[i].standardVertices[j].TangentNormal.z;
+
+				outASCII << "Tangent: " << vertexData.tangent[0] << ", " << vertexData.tangent[1] << ", " << vertexData.tangent[2] << "\n\n";
+
+				vertices.push_back(vertexData);
+		}
+
+		outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
+
+		}
+
+		else {
+
+			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
+
+			outASCII << "Vertices Byte Start: " << byteOffset + 4 << endl;
+			byteOffset += sizeof(VertexDeformer) * this->meshes[i].boneVertices.size();
+			outBinary << (char)byteOffset << "\n";
+			outASCII << "Vertices Byte Offset: " << byteOffset + 4 << endl;
+			outASCII << "Vertices Byte Size: " << byteOffset << "\n\n";
+
+			int vertexCount = this->meshes[i].boneVertices.size();
+
+			vector<VertexDeformer> vertices;
+
+			for (int j = 0; j < vertexCount; j++) {
+
+				VertexDeformer vertexData;
+
+				// Position
+				vertexData.pos[0] = this->meshes[i].boneVertices[j].pos.x;
+				vertexData.pos[1] = this->meshes[i].boneVertices[j].pos.y;
+				vertexData.pos[2] = this->meshes[i].boneVertices[j].pos.z;
+
+				outASCII << "Position: " << vertexData.pos[0] << ", " << vertexData.pos[1] << ", " << vertexData.pos[2] << endl;
+
+				// UV-coordinates
+				vertexData.uv[0] = this->meshes[i].boneVertices[j].uv.x;
+				vertexData.uv[1] = this->meshes[i].boneVertices[j].uv.y;
+
+				outASCII << "UV-Coordinates: " << vertexData.uv[0] << ", " << vertexData.uv[1] << endl;
+
+				// Normals
+				vertexData.normal[0] = this->meshes[i].boneVertices[j].normal.x;
+				vertexData.normal[1] = this->meshes[i].boneVertices[j].normal.y;
+				vertexData.normal[2] = this->meshes[i].boneVertices[j].normal.z;
+
+				outASCII << "Normal: " << vertexData.normal[0] << ", " << vertexData.normal[1] << ", " << vertexData.normal[2] << endl;
+
+				// Binormal
+				vertexData.binormal[0] = this->meshes[i].boneVertices[j].BiNormal.x;
+				vertexData.binormal[1] = this->meshes[i].boneVertices[j].BiNormal.y;
+				vertexData.binormal[2] = this->meshes[i].boneVertices[j].BiNormal.z;
+
+				outASCII << "Binormal: " << vertexData.binormal[0] << ", " << vertexData.binormal[1] << ", " << vertexData.binormal[2] << endl;
+
+				// Tangent
+				vertexData.tangent[0] = this->meshes[i].boneVertices[j].TangentNormal.x;
+				vertexData.tangent[1] = this->meshes[i].boneVertices[j].TangentNormal.y;
+				vertexData.tangent[2] = this->meshes[i].boneVertices[j].TangentNormal.z;
+
+				outASCII << "Tangent: " << vertexData.tangent[0] << ", " << vertexData.tangent[1] << ", " << vertexData.tangent[2] << endl;
+
+				// Weights
+				vertexData.weights[0] = this->meshes[i].boneVertices[j].weights[0];
+				vertexData.weights[1] = this->meshes[i].boneVertices[j].weights[1];
+				vertexData.weights[2] = this->meshes[i].boneVertices[j].weights[2];
+				vertexData.weights[3] = this->meshes[i].boneVertices[j].weights[3];
+
+				// Weight Indices
+				vertexData.boneIndices[0] = this->meshes[i].boneVertices[j].boneIndices[0];
+				vertexData.boneIndices[1] = this->meshes[i].boneVertices[j].boneIndices[1];
+				vertexData.boneIndices[2] = this->meshes[i].boneVertices[j].boneIndices[2];
+				vertexData.boneIndices[3] = this->meshes[i].boneVertices[j].boneIndices[3];
+				
+				outASCII << "Weight Pairs: \n"
+					<< vertexData.weights[0] << ", " << vertexData.boneIndices[0] << "\n"
+					<< vertexData.weights[1] << ", " << vertexData.boneIndices[1] << "\n"
+					<< vertexData.weights[2] << ", " << vertexData.boneIndices[2] << "\n"
+					<< vertexData.weights[3] << ", " << vertexData.boneIndices[3] << "\n\n";
+
+				vertices.push_back(vertexData);
+			}
+
+			outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
+		}
+
 	}
 
-	out.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
-
-	}
-
-	out.close();
+	outBinary.close();
+	outASCII.close();
 
 }
 

@@ -48,4 +48,15 @@ struct Vertex
 
 };
 
+struct VertexDeformer {
+
+	float pos[3];
+	float uv[2];
+	float normal[3];
+	float binormal[3];
+	float tangent[3];
+	float weights[4];
+	uint32_t boneIndices[4];
+};
+
 #endif
