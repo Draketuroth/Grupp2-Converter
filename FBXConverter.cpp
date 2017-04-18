@@ -1349,6 +1349,14 @@ void FBXConverter::writeToFile()
 			}
 
 			outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
+
+			outASCII << "--------------------------------------------------" << "BINDPOSE MATRICES" << "--------------------------------------------------" << endl;
+
+			for (unsigned int k = 0; k < this->meshes[i].skeleton.hierarchy.size(); k++) {
+
+				XMMATRIX inversedBindPose = Load4X4JointTransformations(this->meshes[i].skeleton.hierarchy[k]); // converts from float4x4 too xmmatrix
+			
+			}
 		}
 
 	}
@@ -1459,4 +1467,33 @@ HRESULT FBXConverter::LoadSceneFile(const char* fileName, FbxManager* gFbxSdkMan
 	cout << "[OK] File " << fileName << " was successfully loaded into scene " << "\n\n";
 
 	return true;
+}
+
+XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint) {	// Function to specifically convert joint transformations to XMFLOAT4X4
+
+	XMFLOAT4X4 matrix;
+
+	matrix.m[0][0] = joint.GlobalBindposeInverse.Get(0, 0);
+	matrix.m[0][1] = joint.GlobalBindposeInverse.Get(0, 1);
+	matrix.m[0][2] = joint.GlobalBindposeInverse.Get(0, 2);
+	matrix.m[0][3] = joint.GlobalBindposeInverse.Get(0, 3);
+
+	matrix.m[1][0] = joint.GlobalBindposeInverse.Get(1, 0);
+	matrix.m[1][1] = joint.GlobalBindposeInverse.Get(1, 1);
+	matrix.m[1][2] = joint.GlobalBindposeInverse.Get(1, 2);
+	matrix.m[1][3] = joint.GlobalBindposeInverse.Get(1, 3);
+
+	matrix.m[2][0] = joint.GlobalBindposeInverse.Get(2, 0);
+	matrix.m[2][1] = joint.GlobalBindposeInverse.Get(2, 1);
+	matrix.m[2][2] = joint.GlobalBindposeInverse.Get(2, 2);
+	matrix.m[2][3] = joint.GlobalBindposeInverse.Get(2, 3);
+
+	matrix.m[3][0] = joint.GlobalBindposeInverse.Get(3, 0);
+	matrix.m[3][1] = joint.GlobalBindposeInverse.Get(3, 1);
+	matrix.m[3][2] = joint.GlobalBindposeInverse.Get(3, 2);
+	matrix.m[3][3] = joint.GlobalBindposeInverse.Get(3, 3);
+
+	XMMATRIX converted = XMLoadFloat4x4(&matrix);
+
+	return converted;
 }
