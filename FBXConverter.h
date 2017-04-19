@@ -71,6 +71,7 @@ public:
 	HRESULT LoadSceneFile(const char* fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
 
 	XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint);
+	XMFLOAT4X4 FBXConverter::Load4X4Transformations(FbxAMatrix fbxMatrix);
 
 private:
 

@@ -1174,9 +1174,8 @@ void FBXConverter::writeToFile()
 	outASCII << "Lights: " << nrOfLights << endl;
 
 	//------------------------------------------------------//
-	// MESH HEADER FILE
+	// MESH HEADER
 	//------------------------------------------------------//
-
 	for (int index = 0; index < meshes.size(); index++) {
 
 		outASCII << "--------------------------------------------------" << meshes[index].name.c_str() << " MESH" << "--------------------------------------------------" << endl;
@@ -1286,6 +1285,12 @@ void FBXConverter::writeToFile()
 
 			outASCII << "--------------------------------------------------" << "MATERIAL" << "--------------------------------------------------" << endl;
 
+			outASCII << "Material Byte Start: " << byteOffset + 4 << endl;
+			byteOffset += sizeof(XMFLOAT4) * 3;
+			outBinary << (char)byteOffset << "\n";
+			outASCII << "Material Byte Offset: " << byteOffset + 4 << endl;
+			outASCII << "Material Byte Size: " << byteOffset << "\n\n";
+
 			vector<XMFLOAT4>materialAttributes;
 
 			XMFLOAT4 ambient = { 0.0f, 0.0f, 0.0f, 0.0f};
@@ -1294,7 +1299,7 @@ void FBXConverter::writeToFile()
 
 			if (this->meshes[index].objectMaterial.materialType == "Phong") {
 
-				outASCII << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
+				outASCII << "\n---------------------------------------\n" << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
 				
 				ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
 				ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
@@ -1430,7 +1435,7 @@ void FBXConverter::writeToFile()
 				outASCII << "--------------------------------------------------" << "BINDPOSE MATRICES" << "--------------------------------------------------" << endl;
 
 				outASCII << "Bindposes Byte Start: " << byteOffset + 4 << endl;
-				byteOffset += (sizeof(float) * 16) * this->meshes[index].skeleton.hierarchy.size();
+				byteOffset += sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size();
 				outBinary << (char)byteOffset << "\n";
 				outASCII << "Bindposes Byte Offset: " << byteOffset + 4 << endl;
 				outASCII << "Bindposes Byte Size: " << byteOffset << "\n\n";
@@ -1443,7 +1448,7 @@ void FBXConverter::writeToFile()
 				XMFLOAT4 translateFloat;
 				XMFLOAT3 nullFloat = { 0, 0, 0 };
 
-				vector<XMFLOAT4X4>bindPoseChannels;
+				vector<XMFLOAT4X4>bindPoseMatrices;
 
 				for (int jointIndex = 0; jointIndex < this->meshes[index].skeleton.hierarchy.size(); jointIndex++) {
 
@@ -1453,7 +1458,7 @@ void FBXConverter::writeToFile()
 					
 					// Push back to matrix vector
 					XMStoreFloat4x4(&bindPoseMatrix, inversedBindPoseXM);
-					bindPoseChannels.push_back(bindPoseMatrix);
+					bindPoseMatrices.push_back(bindPoseMatrix);
 
 					// Zero out XMVECTORS
 					scaleVector = XMLoadFloat3(&nullFloat);
@@ -1487,15 +1492,25 @@ void FBXConverter::writeToFile()
 
 				}
 
-				outBinary.write((char*)bindPoseChannels.data(), sizeof(bindPoseChannels[0]) * bindPoseChannels.size());
+				outBinary.write((char*)bindPoseMatrices.data(), sizeof(bindPoseMatrices[0]) * bindPoseMatrices.size());
 
 				//------------------------------------------------------//
 				// LOAD ANIMATIONS
 				//------------------------------------------------------//
 
-				vector<XMFLOAT4>animationTransformations[ANIMATIONCOUNT];
+				outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
+
+				vector<XMFLOAT4X4>animationTransformations[ANIMATIONCOUNT];
 
 				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) {
+
+					outASCII << "\n-----------------------------------\n" << "Animation" << currentAnimationIndex << "\n-----------------------------------\n";
+					outASCII << "Animation Byte Start: " << byteOffset + 4 << endl;
+					int currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
+					byteOffset += (sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size()) * currentAnimLength;
+					outBinary << (char)byteOffset << "\n";
+					outASCII << "Animation Byte Offset: " << byteOffset + 4 << endl;
+					outASCII << "Animation Byte Size: " << byteOffset << "\n\n";
 
 					int hierarchySize = this->meshes[index].skeleton.hierarchy.size();
 
@@ -1505,13 +1520,10 @@ void FBXConverter::writeToFile()
 
 						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex << animationLength; currentKeyFrameIndex++) {
 
-							XMFLOAT4 jointTranslation = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].Translation;
-							XMFLOAT4 jointRotation = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].RotationQuat;
-							XMFLOAT4 jointScale = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].Scale;
-
-							animationTransformations[currentAnimationIndex].push_back(jointTranslation);
-							animationTransformations[currentAnimationIndex].push_back(jointRotation);
-							animationTransformations[currentAnimationIndex].push_back(jointScale);
+							FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;
+							XMFLOAT4X4 jointGlobalTransform = Load4X4Transformations(keyframe);
+							
+							animationTransformations[currentAnimationIndex].push_back(jointGlobalTransform);
 
 						}
 
@@ -1527,6 +1539,12 @@ void FBXConverter::writeToFile()
 
 				outASCII << "--------------------------------------------------" << "MATERIAL" << "--------------------------------------------------" << endl;
 
+				outASCII << "Material Byte Start: " << byteOffset + 4 << endl;
+				byteOffset += sizeof(XMFLOAT4) * 3;
+				outBinary << (char)byteOffset << "\n";
+				outASCII << "Material Byte Offset: " << byteOffset + 4 << endl;
+				outASCII << "Material Byte Size: " << byteOffset << "\n";
+
 				vector<XMFLOAT4>materialAttributes;
 
 				XMFLOAT4 ambient = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -1535,7 +1553,7 @@ void FBXConverter::writeToFile()
 
 				if (this->meshes[index].objectMaterial.materialType == "Phong") {
 
-					outASCII << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
+					outASCII << "\n---------------------------------------\n" << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
 
 					ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
 					ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
@@ -1561,7 +1579,7 @@ void FBXConverter::writeToFile()
 
 				else if (this->meshes[index].objectMaterial.materialType == "Lambert") {
 
-					outASCII << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
+					outASCII << "\n---------------------------------------\n" << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
 
 					ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
 					ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
@@ -1728,4 +1746,31 @@ XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint) {	// Function to
 	XMMATRIX converted = XMLoadFloat4x4(&matrix);
 
 	return converted;
+}
+
+XMFLOAT4X4 FBXConverter::Load4X4Transformations(FbxAMatrix fbxMatrix) {
+
+	XMFLOAT4X4 matrix;
+
+	matrix.m[0][0] = fbxMatrix.Get(0, 0);
+	matrix.m[0][1] = fbxMatrix.Get(0, 1);
+	matrix.m[0][2] = fbxMatrix.Get(0, 2);
+	matrix.m[0][3] = fbxMatrix.Get(0, 3);
+
+	matrix.m[1][0] = fbxMatrix.Get(1, 0);
+	matrix.m[1][1] = fbxMatrix.Get(1, 1);
+	matrix.m[1][2] = fbxMatrix.Get(1, 2);
+	matrix.m[1][3] = fbxMatrix.Get(1, 3);
+
+	matrix.m[2][0] = fbxMatrix.Get(2, 0);
+	matrix.m[2][1] = fbxMatrix.Get(2, 1);
+	matrix.m[2][2] = fbxMatrix.Get(2, 2);
+	matrix.m[2][3] = fbxMatrix.Get(2, 3);
+
+	matrix.m[3][0] = fbxMatrix.Get(3, 0);
+	matrix.m[3][1] = fbxMatrix.Get(3, 1);
+	matrix.m[3][2] = fbxMatrix.Get(3, 2);
+	matrix.m[3][3] = fbxMatrix.Get(3, 3);
+
+	return matrix;
 }
