@@ -467,15 +467,17 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 				FbxAMatrix currentTransformOffset = node->EvaluateGlobalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateGlobalTransform(currentTime);
 
-				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Translation = XMFLOAT3(
+				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Translation = XMFLOAT4(
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[0],
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[1],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[2]);
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[2],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[3]);
 
-				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Scale = XMFLOAT3(
+				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Scale = XMFLOAT4(
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[0],
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[1],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[2]);
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[2],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[3]);
 
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].RotationQuat = XMFLOAT4(
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetQ().mData[0],
@@ -1141,12 +1143,13 @@ void FBXConverter::writeToFile()
 	//------------------------------------------------------//
 	// HEADER
 	//------------------------------------------------------//
+
 	// Create the binary file
 	ofstream outBinary("vertexBinaryData.txt", std::ios::binary);
 	ofstream outASCII("vertexASCIIData.txt", std::ios::out);
 
 	outASCII << "--------------------------------------------------HEADER--------------------------------------------------" << endl;
-	
+
 	uint32_t nrOfMeshes, nrOfCameras, nrOfLights;
 	uint32_t byteOffset = 0;
 
@@ -1174,9 +1177,9 @@ void FBXConverter::writeToFile()
 	// MESH HEADER FILE
 	//------------------------------------------------------//
 
-	for(int i = 0; i < meshes.size(); i++){
+	for (int index = 0; index < meshes.size(); index++) {
 
-		outASCII << "--------------------------------------------------" << meshes[i].name.c_str() << " MESH" << "--------------------------------------------------" << endl;
+		outASCII << "--------------------------------------------------" << meshes[index].name.c_str() << " MESH" << "--------------------------------------------------" << endl;
 
 		// Add byte offset for the mesh position, rotation and scale
 		outASCII << "Mesh Properties Byte Start: " << byteOffset + 4 << endl;
@@ -1189,182 +1192,411 @@ void FBXConverter::writeToFile()
 		float meshRotation[3];
 		float meshScale[3];
 
-		meshPosition[0] = this->meshes[i].position.x;
+		meshPosition[0] = this->meshes[index].position.x;
 		outBinary << (char)meshPosition[0];
-		meshPosition[1] = this->meshes[i].position.y;
+		meshPosition[1] = this->meshes[index].position.y;
 		outBinary << (char)meshPosition[1];
-		meshPosition[2] = this->meshes[i].position.z;
+		meshPosition[2] = this->meshes[index].position.z;
 		outBinary << (char)meshPosition[2];
 
 		outASCII << "Position: " << meshPosition[0] << ", " << meshPosition[1] << ", " << meshPosition[2] << endl;
 
-		meshRotation[0] = this->meshes[i].rotation.x;
+		meshRotation[0] = this->meshes[index].rotation.x;
 		outBinary << (char)meshRotation[0];
-		meshRotation[1] = this->meshes[i].rotation.y;
+		meshRotation[1] = this->meshes[index].rotation.y;
 		outBinary << (char)meshRotation[1];
-		meshRotation[2] = this->meshes[i].rotation.z;
+		meshRotation[2] = this->meshes[index].rotation.z;
 		outBinary << (char)meshRotation[2];
 
 		outASCII << "Rotation: " << meshRotation[0] << ", " << meshRotation[1] << ", " << meshRotation[2] << endl;
 
-		meshScale[0] = this->meshes[i].meshScale.x;
+		meshScale[0] = this->meshes[index].meshScale.x;
 		outBinary << (char)meshScale[0];
-		meshScale[1] = this->meshes[i].meshScale.y;
+		meshScale[1] = this->meshes[index].meshScale.y;
 		outBinary << (char)meshScale[1];
-		meshScale[2] = this->meshes[i].meshScale.z;
+		meshScale[2] = this->meshes[index].meshScale.z;
 		outBinary << (char)meshScale[2];
 
 		outASCII << "Scale: " << meshScale[0] << ", " << meshScale[1] << ", " << meshScale[2] << endl;
 
-		if(meshes[i].vertexLayout == 0){
+		//------------------------------------------------------//
+		// GATHER VERTICES AND CHECK VERTEX LAYOUT
+		//------------------------------------------------------//
+
+		if (meshes[index].vertexLayout == 0) {
 
 			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
 
 			outASCII << "Vertices Byte Start: " << byteOffset + 4 << endl;
-			byteOffset += sizeof(Vertex) * this->meshes[i].standardVertices.size();
+			byteOffset += sizeof(Vertex) * this->meshes[index].standardVertices.size();
 			outBinary << (char)byteOffset << "\n";
 			outASCII << "Vertices Byte Offset: " << byteOffset + 4 << endl;
 			outASCII << "Vertices Byte Size: " << byteOffset << "\n\n";
 
-			int vertexCount = this->meshes[i].standardVertices.size();
+			int vertexCount = this->meshes[index].standardVertices.size();
 
 			vector<Vertex> vertices;
 
-			for (int j = 0; j < vertexCount; j++) {
+			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
 
 				Vertex vertexData;
 
 				// Position
-				vertexData.pos[0] = this->meshes[i].standardVertices[j].pos.x;
-				vertexData.pos[1] = this->meshes[i].standardVertices[j].pos.y;
-				vertexData.pos[2] = this->meshes[i].standardVertices[j].pos.z;
+				vertexData.pos[0] = this->meshes[index].standardVertices[vertexIndex].pos.x;
+				vertexData.pos[1] = this->meshes[index].standardVertices[vertexIndex].pos.y;
+				vertexData.pos[2] = this->meshes[index].standardVertices[vertexIndex].pos.z;
 
 				outASCII << "Position: " << vertexData.pos[0] << ", " << vertexData.pos[1] << ", " << vertexData.pos[2] << endl;
 
 				// UV-coordinates
-				vertexData.uv[0] = this->meshes[i].standardVertices[j].uv.x;
-				vertexData.uv[1] = this->meshes[i].standardVertices[j].uv.y;
+				vertexData.uv[0] = this->meshes[index].standardVertices[vertexIndex].uv.x;
+				vertexData.uv[1] = this->meshes[index].standardVertices[vertexIndex].uv.y;
 
 				outASCII << "UV-Coordinates: " << vertexData.uv[0] << ", " << vertexData.uv[1] << endl;
 
 				// Normals
-				vertexData.normal[0] = this->meshes[i].standardVertices[j].normal.x;
-				vertexData.normal[1] = this->meshes[i].standardVertices[j].normal.y;
-				vertexData.normal[2] = this->meshes[i].standardVertices[j].normal.z;
+				vertexData.normal[0] = this->meshes[index].standardVertices[vertexIndex].normal.x;
+				vertexData.normal[1] = this->meshes[index].standardVertices[vertexIndex].normal.y;
+				vertexData.normal[2] = this->meshes[index].standardVertices[vertexIndex].normal.z;
 
 				outASCII << "Normal: " << vertexData.normal[0] << ", " << vertexData.normal[1] << ", " << vertexData.normal[2] << endl;
 
 				// Binormal
-				vertexData.binormal[0] = this->meshes[i].standardVertices[j].BiNormal.x;
-				vertexData.binormal[1] = this->meshes[i].standardVertices[j].BiNormal.y;
-				vertexData.binormal[2] = this->meshes[i].standardVertices[j].BiNormal.z;
+				vertexData.binormal[0] = this->meshes[index].standardVertices[vertexIndex].BiNormal.x;
+				vertexData.binormal[1] = this->meshes[index].standardVertices[vertexIndex].BiNormal.y;
+				vertexData.binormal[2] = this->meshes[index].standardVertices[vertexIndex].BiNormal.z;
 
 				outASCII << "Binormal: " << vertexData.binormal[0] << ", " << vertexData.binormal[1] << ", " << vertexData.binormal[2] << endl;
 
 				// Tangent
-				vertexData.tangent[0] = this->meshes[i].standardVertices[j].TangentNormal.x;
-				vertexData.tangent[1] = this->meshes[i].standardVertices[j].TangentNormal.y;
-				vertexData.tangent[2] = this->meshes[i].standardVertices[j].TangentNormal.z;
+				vertexData.tangent[0] = this->meshes[index].standardVertices[vertexIndex].TangentNormal.x;
+				vertexData.tangent[1] = this->meshes[index].standardVertices[vertexIndex].TangentNormal.y;
+				vertexData.tangent[2] = this->meshes[index].standardVertices[vertexIndex].TangentNormal.z;
 
 				outASCII << "Tangent: " << vertexData.tangent[0] << ", " << vertexData.tangent[1] << ", " << vertexData.tangent[2] << "\n\n";
-
-				vertices.push_back(vertexData);
-		}
-
-		outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
-
-		}
-
-		else {
-
-			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
-
-			outASCII << "Vertices Byte Start: " << byteOffset + 4 << endl;
-			byteOffset += sizeof(VertexDeformer) * this->meshes[i].boneVertices.size();
-			outBinary << (char)byteOffset << "\n";
-			outASCII << "Vertices Byte Offset: " << byteOffset + 4 << endl;
-			outASCII << "Vertices Byte Size: " << byteOffset << "\n\n";
-
-			int vertexCount = this->meshes[i].boneVertices.size();
-
-			vector<VertexDeformer> vertices;
-
-			for (int j = 0; j < vertexCount; j++) {
-
-				VertexDeformer vertexData;
-
-				// Position
-				vertexData.pos[0] = this->meshes[i].boneVertices[j].pos.x;
-				vertexData.pos[1] = this->meshes[i].boneVertices[j].pos.y;
-				vertexData.pos[2] = this->meshes[i].boneVertices[j].pos.z;
-
-				outASCII << "Position: " << vertexData.pos[0] << ", " << vertexData.pos[1] << ", " << vertexData.pos[2] << endl;
-
-				// UV-coordinates
-				vertexData.uv[0] = this->meshes[i].boneVertices[j].uv.x;
-				vertexData.uv[1] = this->meshes[i].boneVertices[j].uv.y;
-
-				outASCII << "UV-Coordinates: " << vertexData.uv[0] << ", " << vertexData.uv[1] << endl;
-
-				// Normals
-				vertexData.normal[0] = this->meshes[i].boneVertices[j].normal.x;
-				vertexData.normal[1] = this->meshes[i].boneVertices[j].normal.y;
-				vertexData.normal[2] = this->meshes[i].boneVertices[j].normal.z;
-
-				outASCII << "Normal: " << vertexData.normal[0] << ", " << vertexData.normal[1] << ", " << vertexData.normal[2] << endl;
-
-				// Binormal
-				vertexData.binormal[0] = this->meshes[i].boneVertices[j].BiNormal.x;
-				vertexData.binormal[1] = this->meshes[i].boneVertices[j].BiNormal.y;
-				vertexData.binormal[2] = this->meshes[i].boneVertices[j].BiNormal.z;
-
-				outASCII << "Binormal: " << vertexData.binormal[0] << ", " << vertexData.binormal[1] << ", " << vertexData.binormal[2] << endl;
-
-				// Tangent
-				vertexData.tangent[0] = this->meshes[i].boneVertices[j].TangentNormal.x;
-				vertexData.tangent[1] = this->meshes[i].boneVertices[j].TangentNormal.y;
-				vertexData.tangent[2] = this->meshes[i].boneVertices[j].TangentNormal.z;
-
-				outASCII << "Tangent: " << vertexData.tangent[0] << ", " << vertexData.tangent[1] << ", " << vertexData.tangent[2] << endl;
-
-				// Weights
-				vertexData.weights[0] = this->meshes[i].boneVertices[j].weights[0];
-				vertexData.weights[1] = this->meshes[i].boneVertices[j].weights[1];
-				vertexData.weights[2] = this->meshes[i].boneVertices[j].weights[2];
-				vertexData.weights[3] = this->meshes[i].boneVertices[j].weights[3];
-
-				// Weight Indices
-				vertexData.boneIndices[0] = this->meshes[i].boneVertices[j].boneIndices[0];
-				vertexData.boneIndices[1] = this->meshes[i].boneVertices[j].boneIndices[1];
-				vertexData.boneIndices[2] = this->meshes[i].boneVertices[j].boneIndices[2];
-				vertexData.boneIndices[3] = this->meshes[i].boneVertices[j].boneIndices[3];
-				
-				outASCII << "Weight Pairs: \n"
-					<< vertexData.weights[0] << ", " << vertexData.boneIndices[0] << "\n"
-					<< vertexData.weights[1] << ", " << vertexData.boneIndices[1] << "\n"
-					<< vertexData.weights[2] << ", " << vertexData.boneIndices[2] << "\n"
-					<< vertexData.weights[3] << ", " << vertexData.boneIndices[3] << "\n\n";
 
 				vertices.push_back(vertexData);
 			}
 
 			outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
 
-			outASCII << "--------------------------------------------------" << "BINDPOSE MATRICES" << "--------------------------------------------------" << endl;
+			//------------------------------------------------------//
+			// LOAD MATERIALS
+			//------------------------------------------------------//
 
-			for (unsigned int k = 0; k < this->meshes[i].skeleton.hierarchy.size(); k++) {
+			outASCII << "--------------------------------------------------" << "MATERIAL" << "--------------------------------------------------" << endl;
 
-				XMMATRIX inversedBindPose = Load4X4JointTransformations(this->meshes[i].skeleton.hierarchy[k]); // converts from float4x4 too xmmatrix
-			
+			vector<XMFLOAT4>materialAttributes;
+
+			XMFLOAT4 ambient = { 0.0f, 0.0f, 0.0f, 0.0f};
+			XMFLOAT4 diffuse = { 0.0f, 0.0f, 0.0f, 0.0f};
+			XMFLOAT4 specular = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+			if (this->meshes[index].objectMaterial.materialType == "Phong") {
+
+				outASCII << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
+				
+				ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
+				ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
+				ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
+				outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << endl;
+
+				diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
+				diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
+				diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
+				outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << endl;
+
+				specular.x = this->meshes[index].objectMaterial.specularColor.x;
+				specular.y = this->meshes[index].objectMaterial.specularColor.y;
+				specular.z = this->meshes[index].objectMaterial.specularColor.z;
+				specular.w = this->meshes[index].objectMaterial.specularFactor;
+				outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
+
+				materialAttributes.push_back(ambient);
+				materialAttributes.push_back(diffuse);
+				materialAttributes.push_back(specular);
+
 			}
+
+			else if (this->meshes[index].objectMaterial.materialType == "Lambert") {
+
+				outASCII << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
+				
+				ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
+				ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
+				ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
+				outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << endl;
+				
+				diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
+				diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
+				diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
+				outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << endl;
+
+				specular.x = this->meshes[index].objectMaterial.specularColor.x;
+				specular.y = this->meshes[index].objectMaterial.specularColor.y;
+				specular.z = this->meshes[index].objectMaterial.specularColor.z;
+				specular.w = this->meshes[index].objectMaterial.specularFactor;
+				outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
+
+				materialAttributes.push_back(ambient);
+				materialAttributes.push_back(diffuse);
+				materialAttributes.push_back(specular);
+
+			}
+
+			outBinary.write((char*)materialAttributes.data(), sizeof(materialAttributes[0]) * materialAttributes.size());
+
 		}
+
+			else {
+
+				outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
+
+				outASCII << "Vertices Byte Start: " << byteOffset + 4 << endl;
+				byteOffset += sizeof(VertexDeformer) * this->meshes[index].boneVertices.size();
+				outBinary << (char)byteOffset << "\n";
+				outASCII << "Vertices Byte Offset: " << byteOffset + 4 << endl;
+				outASCII << "Vertices Byte Size: " << byteOffset << "\n\n";
+
+				int vertexCount = this->meshes[index].boneVertices.size();
+
+				vector<VertexDeformer> vertices;
+
+				for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+
+					VertexDeformer vertexData;
+
+					// Position
+					vertexData.pos[0] = this->meshes[index].boneVertices[vertexIndex].pos.x;
+					vertexData.pos[1] = this->meshes[index].boneVertices[vertexIndex].pos.y;
+					vertexData.pos[2] = this->meshes[index].boneVertices[vertexIndex].pos.z;
+
+					outASCII << "Position: " << vertexData.pos[0] << ", " << vertexData.pos[1] << ", " << vertexData.pos[2] << endl;
+
+					// UV-coordinates
+					vertexData.uv[0] = this->meshes[index].boneVertices[vertexIndex].uv.x;
+					vertexData.uv[1] = this->meshes[index].boneVertices[vertexIndex].uv.y;
+
+					outASCII << "UV-Coordinates: " << vertexData.uv[0] << ", " << vertexData.uv[1] << endl;
+
+					// Normals
+					vertexData.normal[0] = this->meshes[index].boneVertices[vertexIndex].normal.x;
+					vertexData.normal[1] = this->meshes[index].boneVertices[vertexIndex].normal.y;
+					vertexData.normal[2] = this->meshes[index].boneVertices[vertexIndex].normal.z;
+
+					outASCII << "Normal: " << vertexData.normal[0] << ", " << vertexData.normal[1] << ", " << vertexData.normal[2] << endl;
+
+					// Binormal
+					vertexData.binormal[0] = this->meshes[index].boneVertices[vertexIndex].BiNormal.x;
+					vertexData.binormal[1] = this->meshes[index].boneVertices[vertexIndex].BiNormal.y;
+					vertexData.binormal[2] = this->meshes[index].boneVertices[vertexIndex].BiNormal.z;
+
+					outASCII << "Binormal: " << vertexData.binormal[0] << ", " << vertexData.binormal[1] << ", " << vertexData.binormal[2] << endl;
+
+					// Tangent
+					vertexData.tangent[0] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.x;
+					vertexData.tangent[1] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.y;
+					vertexData.tangent[2] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.z;
+
+					outASCII << "Tangent: " << vertexData.tangent[0] << ", " << vertexData.tangent[1] << ", " << vertexData.tangent[2] << endl;
+
+					// Weights
+					vertexData.weights[0] = this->meshes[index].boneVertices[vertexIndex].weights[0];
+					vertexData.weights[1] = this->meshes[index].boneVertices[vertexIndex].weights[1];
+					vertexData.weights[2] = this->meshes[index].boneVertices[vertexIndex].weights[2];
+					vertexData.weights[3] = this->meshes[index].boneVertices[vertexIndex].weights[3];
+
+					// Weight Indices
+					vertexData.boneIndices[0] = this->meshes[index].boneVertices[vertexIndex].boneIndices[0];
+					vertexData.boneIndices[1] = this->meshes[index].boneVertices[vertexIndex].boneIndices[1];
+					vertexData.boneIndices[2] = this->meshes[index].boneVertices[vertexIndex].boneIndices[2];
+					vertexData.boneIndices[3] = this->meshes[index].boneVertices[vertexIndex].boneIndices[3];
+
+					outASCII << "Weight Pairs: \n"
+						<< vertexData.weights[0] << ", " << vertexData.boneIndices[0] << "\n"
+						<< vertexData.weights[1] << ", " << vertexData.boneIndices[1] << "\n"
+						<< vertexData.weights[2] << ", " << vertexData.boneIndices[2] << "\n"
+						<< vertexData.weights[3] << ", " << vertexData.boneIndices[3] << "\n\n";
+
+					vertices.push_back(vertexData);
+				}
+
+				outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
+
+				//------------------------------------------------------//
+				// LOAD BINDPOSE MATRICES
+				//------------------------------------------------------//
+
+				outASCII << "--------------------------------------------------" << "BINDPOSE MATRICES" << "--------------------------------------------------" << endl;
+
+				outASCII << "Bindposes Byte Start: " << byteOffset + 4 << endl;
+				byteOffset += (sizeof(float) * 16) * this->meshes[index].skeleton.hierarchy.size();
+				outBinary << (char)byteOffset << "\n";
+				outASCII << "Bindposes Byte Offset: " << byteOffset + 4 << endl;
+				outASCII << "Bindposes Byte Size: " << byteOffset << "\n\n";
+
+				XMVECTOR scaleVector;
+				XMFLOAT4 scaleFloat;
+				XMVECTOR rotateVector;
+				XMFLOAT4 rotateFloat;
+				XMVECTOR translateVector;
+				XMFLOAT4 translateFloat;
+				XMFLOAT3 nullFloat = { 0, 0, 0 };
+
+				vector<XMFLOAT4X4>bindPoseChannels;
+
+				for (int jointIndex = 0; jointIndex < this->meshes[index].skeleton.hierarchy.size(); jointIndex++) {
+
+					// Get the bindpose
+					XMFLOAT4X4 bindPoseMatrix;
+					XMMATRIX inversedBindPoseXM = Load4X4JointTransformations(this->meshes[index].skeleton.hierarchy[jointIndex]); // converts from float4x4 too xmmatrix
+					
+					// Push back to matrix vector
+					XMStoreFloat4x4(&bindPoseMatrix, inversedBindPoseXM);
+					bindPoseChannels.push_back(bindPoseMatrix);
+
+					// Zero out XMVECTORS
+					scaleVector = XMLoadFloat3(&nullFloat);
+					rotateVector = XMLoadFloat3(&nullFloat);
+					translateVector = XMLoadFloat3(&nullFloat);
+					
+					// Decompose matrix for ASCII writing
+					XMMatrixDecompose(&scaleVector, &rotateVector, &translateVector, inversedBindPoseXM);
+
+					// Store the XMVECTORS in XMFLOATS
+					XMStoreFloat4(&scaleFloat, scaleVector);
+					XMStoreFloat4(&rotateFloat, rotateVector);
+					XMStoreFloat4(&translateFloat, translateVector);
+
+					// Push back the floats to the bindPoseChannels
+					outASCII << "BINDPOSE MATRIX " << jointIndex << "\n---------------------------------------\nPosition channel: " << endl;
+					outASCII << "X: " << translateFloat.x << "\n";
+					outASCII << "Y: " << translateFloat.y << "\n";
+					outASCII << "Z: " << translateFloat.z << "\n";
+					outASCII << "W: " << translateFloat.w << "\nRotation channel; " << endl;
+
+					outASCII << "X: " << rotateFloat.x << "\n";
+					outASCII << "Y: " << rotateFloat.y << "\n";
+					outASCII << "Z: " << rotateFloat.z << "\n";
+					outASCII << "W: " << rotateFloat.w << "\nScale channel; " << endl;
+
+					outASCII << "X: " << scaleFloat.x << "\n";
+					outASCII << "Y: " << scaleFloat.y << "\n";
+					outASCII << "Z: " << scaleFloat.z << "\n";
+					outASCII << "W: " << scaleFloat.w << "\n\n";
+
+				}
+
+				outBinary.write((char*)bindPoseChannels.data(), sizeof(bindPoseChannels[0]) * bindPoseChannels.size());
+
+				//------------------------------------------------------//
+				// LOAD ANIMATIONS
+				//------------------------------------------------------//
+
+				vector<XMFLOAT4>animationTransformations[ANIMATIONCOUNT];
+
+				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) {
+
+					int hierarchySize = this->meshes[index].skeleton.hierarchy.size();
+
+					for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
+
+						int animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
+
+						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex << animationLength; currentKeyFrameIndex++) {
+
+							XMFLOAT4 jointTranslation = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].Translation;
+							XMFLOAT4 jointRotation = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].RotationQuat;
+							XMFLOAT4 jointScale = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].Scale;
+
+							animationTransformations[currentAnimationIndex].push_back(jointTranslation);
+							animationTransformations[currentAnimationIndex].push_back(jointRotation);
+							animationTransformations[currentAnimationIndex].push_back(jointScale);
+
+						}
+
+					}
+
+					outBinary.write((char*)animationTransformations[currentAnimationIndex].data(), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
+
+				}
+
+				//------------------------------------------------------//
+				// LOAD MATERIALS
+				//------------------------------------------------------//
+
+				outASCII << "--------------------------------------------------" << "MATERIAL" << "--------------------------------------------------" << endl;
+
+				vector<XMFLOAT4>materialAttributes;
+
+				XMFLOAT4 ambient = { 0.0f, 0.0f, 0.0f, 0.0f };
+				XMFLOAT4 diffuse = { 0.0f, 0.0f, 0.0f, 0.0f };
+				XMFLOAT4 specular = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+				if (this->meshes[index].objectMaterial.materialType == "Phong") {
+
+					outASCII << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
+
+					ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
+					ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
+					ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
+					outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << endl;
+
+					diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
+					diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
+					diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
+					outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << endl;
+
+					specular.x = this->meshes[index].objectMaterial.specularColor.x;
+					specular.y = this->meshes[index].objectMaterial.specularColor.y;
+					specular.z = this->meshes[index].objectMaterial.specularColor.z;
+					specular.w = this->meshes[index].objectMaterial.specularFactor;
+					outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
+
+					materialAttributes.push_back(ambient);
+					materialAttributes.push_back(diffuse);
+					materialAttributes.push_back(specular);
+
+				}
+
+				else if (this->meshes[index].objectMaterial.materialType == "Lambert") {
+
+					outASCII << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
+
+					ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
+					ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
+					ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
+					outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << endl;
+
+					diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
+					diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
+					diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
+					outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << endl;
+
+					specular.x = this->meshes[index].objectMaterial.specularColor.x;
+					specular.y = this->meshes[index].objectMaterial.specularColor.y;
+					specular.z = this->meshes[index].objectMaterial.specularColor.z;
+					specular.w = this->meshes[index].objectMaterial.specularFactor;
+					outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
+
+					materialAttributes.push_back(ambient);
+					materialAttributes.push_back(diffuse);
+					materialAttributes.push_back(specular);
+
+				}
+
+				outBinary.write((char*)materialAttributes.data(), sizeof(materialAttributes[0]) * materialAttributes.size());
+
+			}
+
+		}
+
+		outBinary.close();
+		outASCII.close();
 
 	}
 
-	outBinary.close();
-	outASCII.close();
 
-}
 
 FbxAMatrix FBXConverter::GetGeometryTransformation(FbxNode* node) {
 

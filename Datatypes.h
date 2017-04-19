@@ -39,8 +39,8 @@ struct Keyframe { // Stores the attributes of a keyframe in an animation
 
 	FbxAMatrix GlobalTransform;
 	float TimePos;
-	XMFLOAT3 Translation;
-	XMFLOAT3 Scale;
+	XMFLOAT4 Translation;
+	XMFLOAT4 Scale;
 	XMFLOAT4 RotationQuat;
 
 };
@@ -59,7 +59,7 @@ struct Joint { // Stores the attributes of a joint node
 	FbxAMatrix GlobalBindposeInverse;
 	FbxAMatrix TransformMatrix;
 	FbxAMatrix TransformLinkMatrix;
-	Animation Animations[3];
+	Animation Animations[2];
 
 	FbxNode* Node;
 
