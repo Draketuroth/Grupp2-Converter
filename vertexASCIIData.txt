@@ -5,20 +5,20 @@ Cameras: 1
 Lights: 3
 --------------------------------------------------pCube1 MESH--------------------------------------------------
 Mesh Properties Byte Start: 16
-Byte offset: 56
+Byte offset: 36
 
 Position: -6.10626, 0, 0
 Rotation: 0, 0, 0
 Scale: 1.45844, 1.45844, 1.45844
 --------------------------------------------------VERTICES--------------------------------------------------
 Vertices Byte Start: 52
-Byte offset: 2072
+Byte offset: 2016
 
 Position: -0.5, -0.5, 0.5
 UV-Coordinates: 0.375, 1
 Normal: 0, 0, 1
-Binormal: 2.2028e-36, 4.59051e-41, -1.89932e+15
-Tangent: 2.94273e-44, 4.2039e-45, 4.59051e-41
+Binormal: -0.496862, 4.59051e-41, 34.4816
+Tangent: 3.27904e-43, 4.2039e-45, 4.59051e-41
 
 Position: 0.5, -0.5, 0.5
 UV-Coordinates: 0.625, 1
@@ -232,7 +232,7 @@ Tangent: 1, -0, -0
 
 --------------------------------------------------MATERIAL--------------------------------------------------
 Material Byte Start: 2068
-Byte offset: 2120
+Byte offset: 48
 
 MATERIAL lambert1
 ---------------------------------------
@@ -242,20 +242,20 @@ Diffuse: 1, 1, 1
 Specular: 0, 0, 0, 0
 --------------------------------------------------pCube2 MESH--------------------------------------------------
 Mesh Properties Byte Start: 2116
-Byte offset: 2156
+Byte offset: 36
 
 Position: 0.134685, 0, 0
 Rotation: 0, 0, 0
 Scale: 1.45844, 1.45844, 1.45844
 --------------------------------------------------VERTICES--------------------------------------------------
 Vertices Byte Start: 2152
-Byte offset: 5516
+Byte offset: 3360
 
 Position: -0.5, -0.5, 0.5
 UV-Coordinates: 0.375, 1
 Normal: 0, 0, 1
-Binormal: 2.2028e-36, 4.59051e-41, -1.89932e+15
-Tangent: 2.94273e-44, 4.2039e-45, 4.59051e-41
+Binormal: -0.496862, 4.59051e-41, 34.4816
+Tangent: 3.27904e-43, 4.2039e-45, 4.59051e-41
 
 Position: 0.5, -0.5, 0.5
 UV-Coordinates: 0.625, 1
@@ -613,7 +613,7 @@ Tangent: 1, -0, 0
 
 --------------------------------------------------MATERIAL--------------------------------------------------
 Material Byte Start: 5512
-Byte offset: 5564
+Byte offset: 48
 
 
 ---------------------------------------
@@ -625,20 +625,20 @@ Diffuse: 0, 0, 1
 Specular: 1, 0, 0, 20
 --------------------------------------------------pCube3 MESH--------------------------------------------------
 Mesh Properties Byte Start: 5560
-Byte offset: 5600
+Byte offset: 36
 
 Position: 6.56646, 0, 0
 Rotation: 0, 0, 0
 Scale: 1.45844, 1.45844, 1.45844
 --------------------------------------------------VERTICES--------------------------------------------------
 Vertices Byte Start: 5596
-Byte offset: 10304
+Byte offset: 4704
 
 Position: -0.5, -0.5, 0.5
 UV-Coordinates: 0.375, 1
 Normal: 0, 0, 1
-Binormal: 2.2028e-36, 4.59051e-41, -1.89932e+15
-Tangent: 2.94273e-44, 4.2039e-45, 4.59051e-41
+Binormal: -0.496862, 4.59051e-41, 34.4816
+Tangent: 3.27904e-43, 4.2039e-45, 4.59051e-41
 
 Position: 0.5, -0.5, 0.5
 UV-Coordinates: 0.625, 1
@@ -1140,7 +1140,7 @@ Tangent: 1, 0, 0
 
 --------------------------------------------------MATERIAL--------------------------------------------------
 Material Byte Start: 10300
-Byte offset: 10352
+Byte offset: 48
 
 
 ---------------------------------------
@@ -1152,20 +1152,20 @@ Diffuse: 1, 0, 0
 Specular: 0, 1, 0, 2
 --------------------------------------------------Character1 MESH--------------------------------------------------
 Mesh Properties Byte Start: 10348
-Byte offset: 10388
+Byte offset: 36
 
 Position: 0, 0, 0
 Rotation: 0, 0, 0
 Scale: 1, 1, 1
 --------------------------------------------------VERTICES--------------------------------------------------
 Vertices Byte Start: 10384
-Byte offset: 752492
+Byte offset: 742104
 
 Position: -0.773113, -6.71148e-05, 0.684616
 UV-Coordinates: 0.412506, 0.9995
 Normal: -0.297514, -0.940707, -0.162959
-Binormal: 8.15075e-37, 4.59093e-41, 6.68352e-27
-Tangent: 4.59093e-41, 1.4013e-45, 2.94273e-44
+Binormal: 8.35437e-36, 4.59093e-41, 1.03705e-25
+Tangent: 4.59093e-41, 1.4013e-45, 3.27904e-43
 Weight Pairs: 
 0.5, 5
 0.5, 6
@@ -93927,7 +93927,7 @@ Weight Pairs:
 --------------------------------------------------BINDPOSE MATRICES--------------------------------------------------
 Bindposes Byte Start: 752488
 
-Byte offset: 753516
+Byte offset: 1024
 BINDPOSE MATRIX 0
 ---------------------------------------
 Position channel: 
@@ -94222,18 +94222,18 @@ W: 0
 Animation0
 -----------------------------------
 Animation Byte Start: 753512
-Byte offset: 876396
+Byte offset: 122880
 
 
 -----------------------------------
 Animation1
 -----------------------------------
 Animation Byte Start: 876392
-Byte offset: 999276
+Byte offset: 122880
 
 --------------------------------------------------MATERIAL--------------------------------------------------
 Material Byte Start: 999272
-Byte offset: 999324
+Byte offset: 48
 
 ---------------------------------------
 MATERIAL phongGreen
