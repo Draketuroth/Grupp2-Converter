@@ -1642,8 +1642,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 
 	}
 
-
-
 FbxAMatrix FBXConverter::GetGeometryTransformation(FbxNode* node) {
 
 	// Geometric offset is to allow this offset to not inherit and propagate to children or its parents
