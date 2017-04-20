@@ -1120,7 +1120,7 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 				<< "Camera " << i + 1 <<
 				"\n-----------------------------------------\n"
 
-				<< "Name: " << cameras[i].name << "\nPosition: {"
+				<< "Name: " << cameras[i].name.c_str() << "\nPosition: {"
 				<< cameras[i].position.x << ", "
 				<< cameras[i].position.y << ", "
 				<< cameras[i].position.z << "}\nRotation: {"
@@ -1645,11 +1645,50 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 			}
 
 		}
+		
+	//-------------------------------
+	//	CAMERA HEADER
+	//-------------------------------
+	for (int i = 0; i < cameras.size(); i++)
+	{
+		outASCII << "--------------------------------------------------" << cameras[i].name.c_str() << " CAMERA" << "--------------------------------------------------" << endl;
+
+		// Add byte offset for the camera position and rotation
+		outASCII << "Camera Properties Byte Start: " << byteCounter << "\n";
+		byteOffset = sizeof(float) * 6;	// Camera position and camera rotation requires 6 floats in byte offset
+		byteCounter += byteOffset;
+		outASCII << "Byte offset: " << byteOffset << "\n\n";
+
+		float cameraPos[3];
+		float cameraRot[3];
+
+		cameraPos[0] = this->cameras[i].position.x;
+		outBinary << (char)cameraPos[0];
+		cameraPos[1] = this->cameras[i].position.y;
+		outBinary << (char)cameraPos[1];
+		cameraPos[2] = this->cameras[i].position.z;
+		outBinary << (char)cameraPos[2];
+
+		outASCII << "Position: " << cameraPos[0] << ", " << cameraPos[1] << ", " << cameraPos[2] << endl;
+
+		cameraRot[0] = this->cameras[i].rotation.x;
+		outBinary << (char)cameraRot[0];
+		cameraRot[1] = this->cameras[i].rotation.y;
+		outBinary << (char)cameraRot[1];
+		cameraRot[2] = this->cameras[i].rotation.z;
+		outBinary << (char)cameraRot[2];
+
+		outASCII << "Rotation: " << cameraRot[0] << ", " << cameraRot[1] << ", " << cameraRot[2] << endl;
+
+	}
+
+
 
 		outBinary.close();
 		outASCII.close();
 
-	}
+}
+
 
 FbxAMatrix FBXConverter::GetGeometryTransformation(FbxNode* node) {
 

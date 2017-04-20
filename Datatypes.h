@@ -155,7 +155,7 @@ struct Light {
 struct Camera {
 
 	FbxCamera* cameraNode;
-	const char* name;
+	string name;
 	XMFLOAT3 position;
 	XMFLOAT3 rotation;
 };
