@@ -19,6 +19,8 @@
 using namespace std;
 using namespace DirectX;
 
+#define ANIMATIONCOUNT 2
+
 class FBXConverter {
 
 public:
@@ -26,45 +28,52 @@ public:
 	FBXConverter();
 	~FBXConverter();
 
-	void ReleaseAll();
+	void ReleaseAll(FbxManager* gFbxSdkManager);
 
 	bool Load(const char *fileName);
 
-	bool LoadFBXFormat(const char *fileName);
+	bool LoadFBXFormat(const char *mainFileName);
 
-	void LoadMeshes();
+	void LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
 	void ProcessControlPoints(Mesh &pMesh);
 	
-	void CheckSkeleton(Mesh &pMesh);
+	void CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+	void LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh);
+	void RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int depth, int index, int parentIndex);
+	bool LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
 
-	void CreateVertexData(Mesh &pMesh);
+	void GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* scene, int animIndex);
 
-	void LoadLights();
-	void LoadCameras();
-	void writeToFile();
-	void LoadMorphAnim(FbxScene* scene);
+	void LoadLights(FbxNode* pFbxRootNode);
+	void LoadCameras(FbxNode* pFbxRootNode);
 
-	void LoadSkeletonHierarchy(Mesh &pMesh);
+	void CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode);
+	void CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode);
 
-	void RecursiveDepthFirstSearch(Mesh &pMesh, FbxNode* node, int depth, int index, int parentIndex);
+	void LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh);
+	
+	void writeToFile(const char* pathASCII, const char* pathBinary);
 
-	void GatherAnimationData(Mesh &pMesh);
-
+	//----------------------------------------------------------------------------------------------------------------------------------//
+	// SECONDARY FUNCTIONS
+	//----------------------------------------------------------------------------------------------------------------------------------//
 
 	FbxAMatrix GetGeometryTransformation(FbxNode* node);
 	unsigned int FindJointIndexByName(std::string& jointName, Skeleton skeleton);
-
 	void ConvertToLeftHanded(FbxAMatrix &matrix);
+	
+	FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node, string meshName);
+
+	//----------------------------------------------------------------------------------------------------------------------------------//
+	// OPEN FILE FUNCTIONS
+	//----------------------------------------------------------------------------------------------------------------------------------//
+
+	HRESULT LoadSceneFile(const char* fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+
+	XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint);
+	XMFLOAT4X4 FBXConverter::Load4X4Transformations(FbxAMatrix fbxMatrix);
 
 private:
-
-	FbxManager* gFbxSdkManager;
-	FbxIOSettings* pIOsettings;
-
-	FbxImporter* pImporter;
-	FbxScene* pFbxScene;
-
-	FbxNode* pFbxRootNode;
 
 	vector<Mesh> meshes;
 	vector<Light> lights;

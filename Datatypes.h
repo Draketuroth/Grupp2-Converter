@@ -39,22 +39,28 @@ struct Keyframe { // Stores the attributes of a keyframe in an animation
 
 	FbxAMatrix GlobalTransform;
 	float TimePos;
-	XMFLOAT3 Translation;
-	XMFLOAT3 Scale;
+	XMFLOAT4 Translation;
+	XMFLOAT4 Scale;
 	XMFLOAT4 RotationQuat;
 
 };
 
+struct Animation {
+
+	vector<Keyframe> Sequence;
+	FbxLongLong Length;
+};
+
 struct Joint { // Stores the attributes of a joint node
 
-	const char* Name;
+	string Name;
 	int ParentIndex;
 
 	FbxAMatrix GlobalBindposeInverse;
 	FbxAMatrix TransformMatrix;
 	FbxAMatrix TransformLinkMatrix;
+	Animation Animations[2];
 
-	vector<Keyframe> Animation;
 	FbxNode* Node;
 
 	Joint() :
@@ -79,10 +85,27 @@ struct BlendingIndexWeightPair { // Middle hand container to help with passing V
 		BlendWeight(0)
 	{}
 };
+
+struct Texture{
+
+	string textureName;
+	string texturePath;
+};
+
 struct Material
 {
-	FbxSurfaceMaterial* meshMaterial;
-	
+	string materialName;
+	XMFLOAT3 diffuseColor;
+	float diffuseFactor;
+
+	XMFLOAT3 ambientColor;
+	float ambientFactor;
+
+	XMFLOAT3 specularColor;
+	float specularFactor;
+
+	string materialType;
+	Texture diffuseTexture;
 };
 
 struct ControlPoint { // Resembles a physical vertex point in the FBX SDK
@@ -96,24 +119,28 @@ struct ControlPoint { // Resembles a physical vertex point in the FBX SDK
 	}
 
 };
+
 struct Skeleton { // Stores every joint in the skeleton hierarchy from the loaded FBX file
 
 	vector<Joint> hierarchy;
 	int hierarchyDepth;
 
 };
+
 struct Mesh { // Extended node type to hold both the FBX mesh node and its vertices
 
 	FbxMesh* meshNode;
-	const char* name;
+	string name;
 	XMFLOAT3 position;
 	XMFLOAT3 rotation;
 	unordered_map<unsigned int, ControlPoint*>controlPoints;
 	Skeleton skeleton;
-	vector<Vertex_Standard>vertices;
+	int vertexLayout;
+	vector<Vertex_Standard>standardVertices;
+	vector<Vertex_Bone>boneVertices;
 	vector<int>indices;
 	Material objectMaterial;
-	XMFLOAT3 mechScale; 
+	XMFLOAT3 meshScale;
 
 };
 
