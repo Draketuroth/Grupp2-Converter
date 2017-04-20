@@ -94,6 +94,7 @@ struct Texture{
 
 struct Material
 {
+	bool hasTexture;
 	string materialName;
 	XMFLOAT3 diffuseColor;
 	float diffuseFactor;

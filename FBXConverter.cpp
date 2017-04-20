@@ -927,6 +927,8 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 			for (int j = 0; j < textureCount; j++) {
 
+				pMesh.objectMaterial.hasTexture = true;
+
 				FbxTexture* materialTexture = FbxCast<FbxTexture>(materialProperty.GetSrcObject<FbxTexture>(j));
 
 				pMesh.objectMaterial.diffuseTexture.textureName = materialTexture->GetName();
@@ -940,6 +942,7 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 		else {
 
+			pMesh.objectMaterial.hasTexture = false;
 			pMesh.objectMaterial.diffuseTexture.textureName = "No texture attached to this channel";
 			pMesh.objectMaterial.diffuseTexture.texturePath = "No texture attached to this channel";
 		}
@@ -1161,12 +1164,8 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 	nrOfLights = lights.size(); // 12
 
 	// First 16 bytes holds the main header content
-	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights) + sizeof(byteOffset);
+	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights);
 	byteCounter += byteOffset;
-
-	// First 4 are the header byte offset represented in a number
-	outBinary << (char)byteOffset << "\n";
-	outASCII << "Header Byte Offset: " << byteOffset << endl;
 
 	// First 8 are the number of meshes represented in a number
 	outBinary << (char)nrOfMeshes << "\n";
@@ -1180,9 +1179,54 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 	outBinary << (char)nrOfLights << "\n";
 	outASCII << "Lights: " << nrOfLights << endl;
 
+	outASCII << "----------------------------------------MESH SUB HEADER----------------------------------------" << endl;
+
 	//------------------------------------------------------//
-	// MESH HEADER
+	// MESH SUB HEADER
 	//------------------------------------------------------//
+
+	for (UINT i = 0; i < nrOfMeshes; i++) {
+
+		outBinary << (char)this->meshes[i].vertexLayout; // Vertex type
+		outBinary << (char)this->meshes[i].controlPoints.size(); // Number of vertices
+		outBinary << (char)this->meshes[i].skeleton.hierarchy.size(); // Number of joints
+
+		if (this->meshes[i].vertexLayout == 1){
+
+		outBinary << (char)this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size(); // Number of keyframes
+
+		}
+
+		else {
+
+			outBinary << (char)0;
+		}
+
+		outBinary << (char)this->meshes[i].objectMaterial.hasTexture; // If the mesh has a texture
+
+	}
+
+	for (UINT i = 0; i < nrOfMeshes; i++) {
+
+		outASCII << "Vertex Layout: " << this->meshes[i].vertexLayout << endl; // Vertex type
+		outASCII << "Vertices: " << this->meshes[i].controlPoints.size() << endl; // Number of vertices
+		outASCII << "Joints: " << this->meshes[i].skeleton.hierarchy.size() << endl; // Number of joints
+
+		if (this->meshes[i].vertexLayout == 1) {
+
+			outASCII << "Keyframes: " << this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size() << endl; // Number of keyframes
+
+		}
+
+		else {
+
+			outASCII << "Keyframes : " << 0 << endl;
+		}
+
+		outASCII << "Texture: " << this->meshes[i].objectMaterial.hasTexture << "\n\n"; // If the mesh has a texture
+
+	}
+
 	for (int index = 0; index < meshes.size(); index++) {
 
 		outASCII << "--------------------------------------------------" << meshes[index].name.c_str() << " MESH" << "--------------------------------------------------" << endl;
@@ -1192,9 +1236,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 		byteOffset = sizeof(float) * 9;	// Mesh position, mesh rotation and mesh scale requires 9 floats in byte offset
 		byteCounter += byteOffset;
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-		// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-		outBinary << (char)byteOffset << "\n";
 
 		float meshPosition[3]; // 3 bytes
 		float meshRotation[3]; // 3 + 3 bytes
@@ -1208,7 +1249,7 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 		outBinary << (char)meshPosition[2];
 
 		outASCII << "Position: " << meshPosition[0] << ", " << meshPosition[1] << ", " << meshPosition[2] << endl;
-
+		
 		meshRotation[0] = this->meshes[index].rotation.x;
 		outBinary << (char)meshRotation[0];
 		meshRotation[1] = this->meshes[index].rotation.y;
@@ -1217,7 +1258,7 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 		outBinary << (char)meshRotation[2];
 
 		outASCII << "Rotation: " << meshRotation[0] << ", " << meshRotation[1] << ", " << meshRotation[2] << endl;
-
+		
 		meshScale[0] = this->meshes[index].meshScale.x;
 		outBinary << (char)meshScale[0];
 		meshScale[1] = this->meshes[index].meshScale.y;
@@ -1226,6 +1267,63 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 		outBinary << (char)meshScale[2];
 
 		outASCII << "Scale: " << meshScale[0] << ", " << meshScale[1] << ", " << meshScale[2] << endl;
+
+		// Vector that will be filled with material attributes
+		vector<XMFLOAT4>materialAttributes;
+
+		XMFLOAT4 ambient = { 0.0f, 0.0f, 0.0f, 1.0f };
+		XMFLOAT4 diffuse = { 0.0f, 0.0f, 0.0f, 1.0f };
+		XMFLOAT4 specular = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+		if (this->meshes[index].objectMaterial.materialType == "Phong") {
+
+			ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
+			ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
+			ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
+			outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << ", " << ambient.w << endl;
+
+			diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
+			diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
+			diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
+			outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << ", " << diffuse.w << endl;
+
+			specular.x = this->meshes[index].objectMaterial.specularColor.x;
+			specular.y = this->meshes[index].objectMaterial.specularColor.y;
+			specular.z = this->meshes[index].objectMaterial.specularColor.z;
+			specular.w = this->meshes[index].objectMaterial.specularFactor;
+			outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
+
+			materialAttributes.push_back(ambient);
+			materialAttributes.push_back(diffuse);
+			materialAttributes.push_back(specular);
+
+		}
+
+		else if (this->meshes[index].objectMaterial.materialType == "Lambert") {
+
+			ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
+			ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
+			ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
+			outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << ", " << ambient.w << endl;
+
+			diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
+			diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
+			diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
+			outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << ", " << diffuse.w << endl;
+
+			specular.x = this->meshes[index].objectMaterial.specularColor.x;
+			specular.y = this->meshes[index].objectMaterial.specularColor.y;
+			specular.z = this->meshes[index].objectMaterial.specularColor.z;
+			specular.w = this->meshes[index].objectMaterial.specularFactor;
+			outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
+
+			materialAttributes.push_back(ambient);
+			materialAttributes.push_back(diffuse);
+			materialAttributes.push_back(specular);
+
+		}
+
+		outBinary.write((char*)materialAttributes.data(), sizeof(materialAttributes[0]) * materialAttributes.size());
 
 		//------------------------------------------------------//
 		// GATHER VERTICES AND CHECK VERTEX LAYOUT
@@ -1239,8 +1337,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 			byteOffset = sizeof(Vertex) * this->meshes[index].standardVertices.size();
 			byteCounter += byteOffset;
 			outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-			outBinary << (char)byteOffset << "\n";
 
 			int vertexCount = this->meshes[index].standardVertices.size();
 
@@ -1299,8 +1395,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 			byteOffset = sizeof(XMFLOAT4) * 3;
 			byteCounter += byteOffset;
 			outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-			outBinary << (char)byteOffset << "\n";
 
 			vector<XMFLOAT4>materialAttributes;
 
@@ -1375,9 +1469,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 				byteCounter += byteOffset;
 
 				outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-				outBinary << (char)byteOffset << "\n";
 
 				int vertexCount = this->meshes[index].boneVertices.size();
 
@@ -1460,9 +1551,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 
 				outASCII << "Byte offset: " << byteOffset << "\n";
 
-				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-				outBinary << (char)byteOffset << "\n";
-
 				XMVECTOR scaleVector;
 				XMFLOAT4 scaleFloat;
 				XMVECTOR rotateVector;
@@ -1541,9 +1629,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 
 					outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-					// Add 4 bytes to the previous byte offset to receive the byte offset for the next chunk
-					outBinary << (char)byteOffset << "\n";
-
 					int hierarchySize = this->meshes[index].skeleton.hierarchy.size();
 
 					for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
@@ -1564,84 +1649,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 					outBinary.write((char*)animationTransformations[currentAnimationIndex].data(), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
 
 				}
-
-				//------------------------------------------------------//
-				// LOAD MATERIALS
-				//------------------------------------------------------//
-
-				outASCII << "--------------------------------------------------" << "MATERIAL" << "--------------------------------------------------" << endl;
-
-				outASCII << "Material Byte Start: " << byteCounter << "\n";
-
-				// The byte offset will be the size of XMFLOAT4 multiplied by the number of material attributes
-				byteOffset = sizeof(XMFLOAT4) * 3;
-				byteCounter += byteOffset;
-
-				outASCII << "Byte offset: " << byteOffset << "\n\n";
-				
-				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-				outBinary << (char)byteOffset << "\n";
-
-				// Vector that will be filled with material attributes
-				vector<XMFLOAT4>materialAttributes;
-
-				XMFLOAT4 ambient = { 0.0f, 0.0f, 0.0f, 0.0f };
-				XMFLOAT4 diffuse = { 0.0f, 0.0f, 0.0f, 0.0f };
-				XMFLOAT4 specular = { 0.0f, 0.0f, 0.0f, 0.0f };
-
-				if (this->meshes[index].objectMaterial.materialType == "Phong") {
-
-					outASCII << "---------------------------------------\n" << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
-
-					ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
-					ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
-					ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
-					outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << endl;
-
-					diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
-					diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
-					diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
-					outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << endl;
-
-					specular.x = this->meshes[index].objectMaterial.specularColor.x;
-					specular.y = this->meshes[index].objectMaterial.specularColor.y;
-					specular.z = this->meshes[index].objectMaterial.specularColor.z;
-					specular.w = this->meshes[index].objectMaterial.specularFactor;
-					outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
-
-					materialAttributes.push_back(ambient);
-					materialAttributes.push_back(diffuse);
-					materialAttributes.push_back(specular);
-
-				}
-
-				else if (this->meshes[index].objectMaterial.materialType == "Lambert") {
-
-					outASCII << "\n---------------------------------------\n" << "MATERIAL " << this->meshes[index].objectMaterial.materialName.c_str() << "\n---------------------------------------\n" << endl;
-
-					ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
-					ambient.y = this->meshes[index].objectMaterial.ambientColor.y;
-					ambient.z = this->meshes[index].objectMaterial.ambientColor.z;
-					outASCII << "Ambient: " << ambient.x << ", " << ambient.y << ", " << ambient.z << endl;
-
-					diffuse.x = this->meshes[index].objectMaterial.diffuseColor.x;
-					diffuse.y = this->meshes[index].objectMaterial.diffuseColor.y;
-					diffuse.z = this->meshes[index].objectMaterial.diffuseColor.z;
-					outASCII << "Diffuse: " << diffuse.x << ", " << diffuse.y << ", " << diffuse.z << endl;
-
-					specular.x = this->meshes[index].objectMaterial.specularColor.x;
-					specular.y = this->meshes[index].objectMaterial.specularColor.y;
-					specular.z = this->meshes[index].objectMaterial.specularColor.z;
-					specular.w = this->meshes[index].objectMaterial.specularFactor;
-					outASCII << "Specular: " << specular.x << ", " << specular.y << ", " << specular.z << ", " << specular.w << endl;
-
-					materialAttributes.push_back(ambient);
-					materialAttributes.push_back(diffuse);
-					materialAttributes.push_back(specular);
-
-				}
-
-				outBinary.write((char*)materialAttributes.data(), sizeof(materialAttributes[0]) * materialAttributes.size());
 
 			}
 
