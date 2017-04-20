@@ -52,7 +52,7 @@ public:
 
 	void LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh);
 	
-	void writeToFile();
+	void writeToFile(const char* pathASCII, const char* pathBinary);
 
 	//----------------------------------------------------------------------------------------------------------------------------------//
 	// SECONDARY FUNCTIONS

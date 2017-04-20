@@ -1138,15 +1138,15 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 
 }
 
-void FBXConverter::writeToFile()
+void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 {
 	//------------------------------------------------------//
 	// HEADER
 	//------------------------------------------------------//
 
 	// Create the binary file
-	ofstream outBinary("vertexBinaryData.txt", std::ios::binary);
-	ofstream outASCII("vertexASCIIData.txt", std::ios::out);
+	ofstream outBinary(pathBinary, std::ios::binary);
+	ofstream outASCII(pathASCII, std::ios::out);
 
 	outASCII << "--------------------------------------------------HEADER--------------------------------------------------" << endl;
 
