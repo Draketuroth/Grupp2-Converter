@@ -602,6 +602,7 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 					FbxGeometryElementTangent* tangents = currentMesh->GetElementTangent(i);
 
 					if (tangents->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+
 					{
 
 						switch (tangents->GetReferenceMode())
