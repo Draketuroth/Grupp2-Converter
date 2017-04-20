@@ -1160,12 +1160,8 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 	nrOfLights = lights.size(); // 12
 
 	// First 16 bytes holds the main header content
-	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights) + sizeof(byteOffset);
+	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights);
 	byteCounter += byteOffset;
-
-	// First 4 are the header byte offset represented in a number
-	outBinary << (char)byteOffset << "\n";
-	outASCII << "Header Byte Offset: " << byteOffset << endl;
 
 	// First 8 are the number of meshes represented in a number
 	outBinary << (char)nrOfMeshes << "\n";
@@ -1191,9 +1187,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 		byteOffset = sizeof(float) * 9;	// Mesh position, mesh rotation and mesh scale requires 9 floats in byte offset
 		byteCounter += byteOffset;
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-		// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-		outBinary << (char)byteOffset << "\n";
 
 		float meshPosition[3]; // 3 bytes
 		float meshRotation[3]; // 3 + 3 bytes
@@ -1238,8 +1231,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 			byteOffset = sizeof(Vertex) * this->meshes[index].standardVertices.size();
 			byteCounter += byteOffset;
 			outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-			outBinary << (char)byteOffset << "\n";
 
 			int vertexCount = this->meshes[index].standardVertices.size();
 
@@ -1298,8 +1289,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 			byteOffset = sizeof(XMFLOAT4) * 3;
 			byteCounter += byteOffset;
 			outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-			outBinary << (char)byteOffset << "\n";
 
 			vector<XMFLOAT4>materialAttributes;
 
@@ -1374,9 +1363,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 				byteCounter += byteOffset;
 
 				outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-				outBinary << (char)byteOffset << "\n";
 
 				int vertexCount = this->meshes[index].boneVertices.size();
 
@@ -1459,9 +1445,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 
 				outASCII << "Byte offset: " << byteOffset << "\n";
 
-				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-				outBinary << (char)byteOffset << "\n";
-
 				XMVECTOR scaleVector;
 				XMFLOAT4 scaleFloat;
 				XMVECTOR rotateVector;
@@ -1540,9 +1523,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 
 					outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-					// Add 4 bytes to the previous byte offset to receive the byte offset for the next chunk
-					outBinary << (char)byteOffset << "\n";
-
 					int hierarchySize = this->meshes[index].skeleton.hierarchy.size();
 
 					for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
@@ -1577,9 +1557,6 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 				byteCounter += byteOffset;
 
 				outASCII << "Byte offset: " << byteOffset << "\n\n";
-				
-				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
-				outBinary << (char)byteOffset << "\n";
 
 				// Vector that will be filled with material attributes
 				vector<XMFLOAT4>materialAttributes;
