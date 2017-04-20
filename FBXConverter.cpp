@@ -1185,8 +1185,9 @@ void FBXConverter::writeToFile()
 		outASCII << "--------------------------------------------------" << meshes[index].name.c_str() << " MESH" << "--------------------------------------------------" << endl;
 
 		// Add byte offset for the mesh position, rotation and scale
-		outASCII << "Mesh Properties Byte Start: " << byteOffset << "\n\n";
+		outASCII << "Mesh Properties Byte Start: " << byteOffset << "\n";
 		byteOffset += sizeof(float) * 9;	// Mesh position, mesh rotation and mesh scale requires 9 floats in byte offset
+		outASCII << "Byte offset: " << byteOffset + 4 << "\n\n";
 
 		// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
 		outBinary << (char)byteOffset << "\n";
@@ -1230,8 +1231,10 @@ void FBXConverter::writeToFile()
 
 			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
 
-			outASCII << "Vertices Byte Start: " << byteOffset << "\n\n";
+			outASCII << "Vertices Byte Start: " << byteOffset << "\n";
 			byteOffset += sizeof(Vertex) * this->meshes[index].standardVertices.size();
+			outASCII << "Byte offset: " << byteOffset + 4 << "\n\n";
+
 			outBinary << (char)byteOffset << "\n";
 
 			int vertexCount = this->meshes[index].standardVertices.size();
@@ -1287,8 +1290,10 @@ void FBXConverter::writeToFile()
 
 			outASCII << "--------------------------------------------------" << "MATERIAL" << "--------------------------------------------------" << endl;
 
-			outASCII << "Material Byte Start: " << byteOffset << "\n\n";
+			outASCII << "Material Byte Start: " << byteOffset << "\n";
 			byteOffset += sizeof(XMFLOAT4) * 3;
+			outASCII << "Byte offset: " << byteOffset + 4 << "\n\n";
+
 			outBinary << (char)byteOffset << "\n";
 
 			vector<XMFLOAT4>materialAttributes;
@@ -1357,10 +1362,12 @@ void FBXConverter::writeToFile()
 
 				outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
 
-				outASCII << "Vertices Byte Start: " << byteOffset << "\n\n";
+				outASCII << "Vertices Byte Start: " << byteOffset << "\n";
 
 				// The byte offset will be the size of this vertex type and how many vertices there are in the mesh
 				byteOffset += sizeof(VertexDeformer) * this->meshes[index].boneVertices.size();
+
+				outASCII << "Byte offset: " << byteOffset + 4 << "\n\n";
 
 				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
 				outBinary << (char)byteOffset << "\n";
@@ -1443,6 +1450,8 @@ void FBXConverter::writeToFile()
 				// Byte offset will be the size of an XMFLOAT4X4 multiplied by the number of joints in the skeleton
 				byteOffset += sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size();
 
+				outASCII << "Byte offset: " << byteOffset + 4 << "\n";
+
 				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
 				outBinary << (char)byteOffset << "\n";
 
@@ -1512,7 +1521,7 @@ void FBXConverter::writeToFile()
 				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) {
 
 					outASCII << "\n-----------------------------------\n" << "Animation" << currentAnimationIndex << "\n-----------------------------------\n";
-					outASCII << "Animation Byte Start: " << byteOffset << "\n\n";
+					outASCII << "Animation Byte Start: " << byteOffset << "\n";
 
 					// Get the current animation length
 					int currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
@@ -1520,6 +1529,8 @@ void FBXConverter::writeToFile()
 					// The byte offset for every animation will be the size of XMFLOAT4X4 multiplied by the number of joints 
 					// multiplied by the amount of keyframes they hold
 					byteOffset += (sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size()) * currentAnimLength;
+
+					outASCII << "Byte offset: " << byteOffset + 4 << "\n\n";
 
 					// Add 4 bytes to the previous byte offset to receive the byte offset for the next chunk
 					outBinary << (char)byteOffset << "\n";
@@ -1551,10 +1562,12 @@ void FBXConverter::writeToFile()
 
 				outASCII << "--------------------------------------------------" << "MATERIAL" << "--------------------------------------------------" << endl;
 
-				outASCII << "Material Byte Start: " << byteOffset << "\n\n";
+				outASCII << "Material Byte Start: " << byteOffset << "\n";
 
 				// The byte offset will be the size of XMFLOAT4 multiplied by the number of material attributes
 				byteOffset += sizeof(XMFLOAT4) * 3;
+
+				outASCII << "Byte offset: " << byteOffset + 4 << "\n\n";
 				
 				// Add four bytes to the previous byte offset and read the new byte offset for the next chunk
 				outBinary << (char)byteOffset << "\n";
