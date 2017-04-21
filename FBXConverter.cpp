@@ -952,6 +952,24 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 	}
 }
 
+bool FBXConverter::ExportTexture(Material &objectMaterial, string exportPath) {
+
+		string texturePath = objectMaterial.diffuseTexture.texturePath;
+		string textureName = objectMaterial.diffuseTexture.textureName;
+		string extension = "." + texturePath.substr(texturePath.find(".") + 1);
+
+		string exportFolder = exportPath + "/Textures/";
+
+		create_directory(exportFolder);
+		if (!copy_file(texturePath, exportFolder + textureName + extension, std::experimental::filesystem::copy_options::overwrite_existing)) {
+
+			cout << "Invalid texture path" << exportPath.c_str() << "doesn't exist!";
+			return false;
+		}
+
+		return true;
+}
+
 void FBXConverter::LoadLights(FbxNode* pFbxRootNode) {
 
 	cout << "\n#----------------------------------------------------------------------------\n"
@@ -1142,15 +1160,18 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 
 }
 
-void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
+void FBXConverter::writeToFile(string pathName)
 {
 	//------------------------------------------------------//
 	// HEADER
 	//------------------------------------------------------//
 
+	string binaryFile = pathName + "/vertexBinaryData.txt";
+	string asciiFile = pathName + "/vertexASCIIData.txt";
+
 	// Create the binary file
-	ofstream outBinary(pathBinary, std::ios::binary);
-	ofstream outASCII(pathASCII, std::ios::out);
+	ofstream outBinary(binaryFile, std::ios::binary);
+	ofstream outASCII(asciiFile, std::ios::out);
 
 	outASCII << "--------------------------------------------------HEADER--------------------------------------------------" << endl;
 
@@ -1324,6 +1345,27 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 		}
 
 		outBinary.write((char*)materialAttributes.data(), sizeof(materialAttributes[0]) * materialAttributes.size());
+
+		//------------------------------------------------------//
+		// EXPORT TEXTURES
+		//------------------------------------------------------//
+
+		if (this->meshes[index].objectMaterial.hasTexture == true) {
+
+			// Export the texture to a texture folder
+			ExportTexture(this->meshes[index].objectMaterial, pathName);
+
+			// Store the texture name
+			string textureName = this->meshes[index].objectMaterial.diffuseTexture.textureName;
+
+			// Add to the byteoffset counter
+			byteOffset = sizeof(textureName);
+			byteCounter += byteOffset;
+
+			// Write texture name to binary and ASCII file
+			outBinary.write(textureName.data(), textureName.size());
+			outASCII << "Texture Name: " << textureName.c_str() << endl;
+		}
 
 		//------------------------------------------------------//
 		// GATHER VERTICES AND CHECK VERTEX LAYOUT
