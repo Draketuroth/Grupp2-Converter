@@ -540,14 +540,6 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 				vertex.normal.y = (float)FBXNormal.mData[1];
 				vertex.normal.z = (float)FBXNormal.mData[2];
 
-				// Push back vertices to the current mesh
-				pMesh.standardVertices.push_back(vertex);
-
-				// Push back indices
-				pMesh.indices.push_back(vertexCounter);
-
-				vertexCounter++;
-
 				if (currentMesh->GetElementBinormalCount() < 1)
 				{
 					cout << ("Invalid Binormal Number") << endl;
@@ -632,6 +624,14 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 
 					}
 				}
+
+				// Push back vertices to the current mesh
+				pMesh.standardVertices.push_back(vertex);
+
+				// Push back indices
+				pMesh.indices.push_back(vertexCounter);
+
+				vertexCounter++;
 
 			}
 
@@ -722,13 +722,6 @@ void FBXConverter::CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode) {
 					vertex.weights[i] = currentControlPoint->BlendingInfo[i].BlendWeight;
 
 				}
-
-				pMesh.boneVertices.push_back(vertex);	// Store all vertices in a separate vector
-
-				pMesh.indices.push_back(vertexCounter);	// Store indices so that vertices doesn't have to be loaded twice into the pipeline
-
-				vertexCounter++;
-
 				if (currentMesh->GetElementBinormalCount() < 1)
 				{
 					cout << ("Invalid Binormal Number") << endl;
@@ -810,6 +803,13 @@ void FBXConverter::CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode) {
 						}
 					}
 				}
+
+				pMesh.boneVertices.push_back(vertex);	// Store all vertices in a separate vector
+
+				pMesh.indices.push_back(vertexCounter);	// Store indices so that vertices doesn't have to be loaded twice into the pipeline
+
+				vertexCounter++;
+
 
 			}
 
