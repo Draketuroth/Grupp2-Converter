@@ -1175,6 +1175,7 @@ void FBXConverter::writeToFile(string pathName)
 
 	outASCII << "--------------------------------------------------HEADER--------------------------------------------------" << endl;
 
+	vector<uint32_t>headerContent;
 	uint32_t nrOfMeshes, nrOfCameras, nrOfLights;
 	uint32_t byteOffset = 0;
 	uint32_t byteCounter = 0;
@@ -1184,21 +1185,24 @@ void FBXConverter::writeToFile(string pathName)
 	nrOfCameras = cameras.size(); // 8
 	nrOfLights = lights.size(); // 12
 
+	headerContent.push_back(nrOfMeshes);
+	headerContent.push_back(nrOfCameras);
+	headerContent.push_back(nrOfLights);
+
 	// First 16 bytes holds the main header content
 	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights);
 	byteCounter += byteOffset;
 
 	// First 8 are the number of meshes represented in a number
-	outBinary << (char)nrOfMeshes << "\n";
 	outASCII << "Meshes: " << nrOfMeshes << endl;
 
 	// First 12 are the number of cameras represented in a number
-	outBinary << (char)nrOfCameras << "\n";
 	outASCII << "Cameras: " << nrOfCameras << endl;
 
 	// First 16 are the number of lights represented in a number
-	outBinary << (char)nrOfLights << "\n";
 	outASCII << "Lights: " << nrOfLights << endl;
+
+	outBinary.write(reinterpret_cast<char*>(headerContent.data()), sizeof(headerContent[0]) * headerContent.size());
 
 	outASCII << "----------------------------------------MESH SUB HEADER----------------------------------------" << endl;
 
@@ -1206,26 +1210,53 @@ void FBXConverter::writeToFile(string pathName)
 	// MESH SUB HEADER
 	//------------------------------------------------------//
 
+	vector<uint32_t>meshSubHeaderContent;
+	
+	uint32_t vertexLayout;
+	uint32_t controlPoints;
+	uint32_t hierarchySize;
+	uint32_t keyframes;
+	uint32_t hasTexture;
+
+
 	for (UINT i = 0; i < nrOfMeshes; i++) {
 
-		outBinary << (char)this->meshes[i].vertexLayout; // Vertex type
-		outBinary << (char)this->meshes[i].controlPoints.size(); // Number of vertices
-		outBinary << (char)this->meshes[i].skeleton.hierarchy.size(); // Number of joints
+		vertexLayout = this->meshes[i].vertexLayout;
+		controlPoints = this->meshes[i].controlPoints.size();
+		hierarchySize = this->meshes[i].skeleton.hierarchy.size();
 
 		if (this->meshes[i].vertexLayout == 1){
 
-		outBinary << (char)this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size(); // Number of keyframes
+			keyframes = this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size();
 
 		}
 
 		else {
 
-			outBinary << (char)0;
+			keyframes = 0;
 		}
 
-		outBinary << (char)this->meshes[i].objectMaterial.hasTexture; // If the mesh has a texture
+		if (this->meshes[i].objectMaterial.hasTexture){
+
+			hasTexture = 1;
+
+		}
+
+		else {
+
+			hasTexture = 0;
+
+		}
+
+		meshSubHeaderContent.push_back(vertexLayout);
+		meshSubHeaderContent.push_back(controlPoints);
+		meshSubHeaderContent.push_back(hierarchySize);
+		meshSubHeaderContent.push_back(keyframes);
+		meshSubHeaderContent.push_back(hasTexture);
 
 	}
+
+	outBinary.write(reinterpret_cast<char*>(meshSubHeaderContent.data()), sizeof(meshSubHeaderContent[0]) * meshSubHeaderContent.size());
 
 	for (UINT i = 0; i < nrOfMeshes; i++) {
 
@@ -1258,36 +1289,39 @@ void FBXConverter::writeToFile(string pathName)
 		byteCounter += byteOffset;
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
 
+		vector<float>meshTransformations;
 		float meshPosition[3]; // 3 bytes
 		float meshRotation[3]; // 3 + 3 bytes
 		float meshScale[3]; // 3 + 3 + 3 bytes
 
 		meshPosition[0] = this->meshes[index].position.x;
-		outBinary << (char)meshPosition[0];
+		meshTransformations.push_back(meshPosition[0]);
 		meshPosition[1] = this->meshes[index].position.y;
-		outBinary << (char)meshPosition[1];
+		meshTransformations.push_back(meshPosition[1]);
 		meshPosition[2] = this->meshes[index].position.z;
-		outBinary << (char)meshPosition[2];
+		meshTransformations.push_back(meshPosition[2]);
 
 		outASCII << "Position: " << meshPosition[0] << ", " << meshPosition[1] << ", " << meshPosition[2] << endl;
 		
 		meshRotation[0] = this->meshes[index].rotation.x;
-		outBinary << (char)meshRotation[0];
+		meshTransformations.push_back(meshRotation[0]);
 		meshRotation[1] = this->meshes[index].rotation.y;
-		outBinary << (char)meshRotation[1];
+		meshTransformations.push_back(meshRotation[1]);
 		meshRotation[2] = this->meshes[index].rotation.z;
-		outBinary << (char)meshRotation[2];
+		meshTransformations.push_back(meshRotation[2]);
 
 		outASCII << "Rotation: " << meshRotation[0] << ", " << meshRotation[1] << ", " << meshRotation[2] << endl;
 		
 		meshScale[0] = this->meshes[index].meshScale.x;
-		outBinary << (char)meshScale[0];
+		meshTransformations.push_back(meshScale[0]);
 		meshScale[1] = this->meshes[index].meshScale.y;
-		outBinary << (char)meshScale[1];
+		meshTransformations.push_back(meshScale[1]);
 		meshScale[2] = this->meshes[index].meshScale.z;
-		outBinary << (char)meshScale[2];
+		meshTransformations.push_back(meshScale[2]);
 
 		outASCII << "Scale: " << meshScale[0] << ", " << meshScale[1] << ", " << meshScale[2] << endl;
+
+		outBinary.write(reinterpret_cast<char*>(meshTransformations.data()), sizeof(meshTransformations[0]) * meshTransformations.size());
 
 		// Vector that will be filled with material attributes
 		vector<XMFLOAT4>materialAttributes;
@@ -1344,7 +1378,7 @@ void FBXConverter::writeToFile(string pathName)
 
 		}
 
-		outBinary.write((char*)materialAttributes.data(), sizeof(materialAttributes[0]) * materialAttributes.size());
+		outBinary.write(reinterpret_cast<char*>(materialAttributes.data()), sizeof(materialAttributes[0]) * materialAttributes.size());
 
 		//------------------------------------------------------//
 		// EXPORT TEXTURES
@@ -1425,7 +1459,7 @@ void FBXConverter::writeToFile(string pathName)
 				vertices.push_back(vertexData);
 			}
 
-			outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
+			outBinary.write(reinterpret_cast<char*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
 
 			//------------------------------------------------------//
 			// LOAD MATERIALS
@@ -1496,7 +1530,7 @@ void FBXConverter::writeToFile(string pathName)
 
 			}
 
-			outBinary.write((char*)materialAttributes.data(), sizeof(materialAttributes[0]) * materialAttributes.size());
+			outBinary.write(reinterpret_cast<char*>(materialAttributes.data()), sizeof(materialAttributes[0]) * materialAttributes.size());
 
 		}
 
@@ -1577,7 +1611,7 @@ void FBXConverter::writeToFile(string pathName)
 				}
 
 				// Write vertices to binary file
-				outBinary.write((char*)vertices.data(), sizeof(vertices[0]) * vertices.size());
+				outBinary.write(reinterpret_cast<char*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
 
 				//------------------------------------------------------//
 				// LOAD BINDPOSE MATRICES
@@ -1646,7 +1680,7 @@ void FBXConverter::writeToFile(string pathName)
 
 				}
 
-				outBinary.write((char*)bindPoseMatrices.data(), sizeof(bindPoseMatrices[0]) * bindPoseMatrices.size());
+				outBinary.write(reinterpret_cast<char*>(bindPoseMatrices.data()), sizeof(bindPoseMatrices[0]) * bindPoseMatrices.size());
 
 				//------------------------------------------------------//
 				// LOAD ANIMATIONS
@@ -1688,7 +1722,7 @@ void FBXConverter::writeToFile(string pathName)
 
 					}
 
-					outBinary.write((char*)animationTransformations[currentAnimationIndex].data(), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
+					outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
 
 				}
 

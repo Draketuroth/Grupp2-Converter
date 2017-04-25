@@ -54,6 +54,7 @@ int main() {
 	Converter.Load(loadPath.c_str());
 	
 	path pathName = current_path();
+	//path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
 	string folderName = pathName.string() + "/Format";
 
 	create_directory(folderName);
