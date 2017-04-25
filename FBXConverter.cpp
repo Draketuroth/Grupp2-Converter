@@ -1289,37 +1289,25 @@ void FBXConverter::writeToFile(string pathName)
 		byteCounter += byteOffset;
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-		vector<float>meshTransformations;
-		float meshPosition[3]; // 3 bytes
-		float meshRotation[3]; // 3 + 3 bytes
-		float meshScale[3]; // 3 + 3 + 3 bytes
+		vector<XMFLOAT3>meshTransformations;
+		XMFLOAT3 meshPosition; // 3 bytes
+		XMFLOAT3 meshRotation; // 3 + 3 bytes
+		XMFLOAT3 meshScale; // 3 + 3 + 3 bytes
 
-		meshPosition[0] = this->meshes[index].position.x;
-		meshTransformations.push_back(meshPosition[0]);
-		meshPosition[1] = this->meshes[index].position.y;
-		meshTransformations.push_back(meshPosition[1]);
-		meshPosition[2] = this->meshes[index].position.z;
-		meshTransformations.push_back(meshPosition[2]);
+		meshPosition = this->meshes[index].position;
+		meshTransformations.push_back(meshPosition);
 
-		outASCII << "Position: " << meshPosition[0] << ", " << meshPosition[1] << ", " << meshPosition[2] << endl;
+		outASCII << "Position: " << meshPosition.x << ", " << meshPosition.y << ", " << meshPosition.z << endl;
 		
-		meshRotation[0] = this->meshes[index].rotation.x;
-		meshTransformations.push_back(meshRotation[0]);
-		meshRotation[1] = this->meshes[index].rotation.y;
-		meshTransformations.push_back(meshRotation[1]);
-		meshRotation[2] = this->meshes[index].rotation.z;
-		meshTransformations.push_back(meshRotation[2]);
+		meshRotation = this->meshes[index].rotation;
+		meshTransformations.push_back(meshRotation);
 
-		outASCII << "Rotation: " << meshRotation[0] << ", " << meshRotation[1] << ", " << meshRotation[2] << endl;
+		outASCII << "Rotation: " << meshRotation.x << ", " << meshRotation.y << ", " << meshRotation.z << endl;
 		
-		meshScale[0] = this->meshes[index].meshScale.x;
-		meshTransformations.push_back(meshScale[0]);
-		meshScale[1] = this->meshes[index].meshScale.y;
-		meshTransformations.push_back(meshScale[1]);
-		meshScale[2] = this->meshes[index].meshScale.z;
-		meshTransformations.push_back(meshScale[2]);
+		meshScale = this->meshes[index].meshScale;
+		meshTransformations.push_back(meshScale);
 
-		outASCII << "Scale: " << meshScale[0] << ", " << meshScale[1] << ", " << meshScale[2] << endl;
+		outASCII << "Scale: " << meshScale.x << ", " << meshScale.y << ", " << meshScale.z << endl;
 
 		outBinary.write(reinterpret_cast<char*>(meshTransformations.data()), sizeof(meshTransformations[0]) * meshTransformations.size());
 
