@@ -1222,17 +1222,19 @@ void FBXConverter::writeToFile(string pathName)
 	for (UINT i = 0; i < nrOfMeshes; i++) {
 
 		vertexLayout = this->meshes[i].vertexLayout;
-		controlPoints = this->meshes[i].controlPoints.size();
-		hierarchySize = this->meshes[i].skeleton.hierarchy.size();
 
 		if (this->meshes[i].vertexLayout == 1){
 
+			controlPoints = this->meshes[i].boneVertices.size();
+			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
 			keyframes = this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size();
 
 		}
 
 		else {
 
+			controlPoints = this->meshes[i].standardVertices.size();
+			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
 			keyframes = 0;
 		}
 
