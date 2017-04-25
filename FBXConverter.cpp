@@ -1387,6 +1387,8 @@ void FBXConverter::writeToFile(string pathName)
 			byteCounter += byteOffset;
 
 			// Write texture name to binary and ASCII file
+			size_t size = textureName.size();
+			outBinary.write(reinterpret_cast<char*>(&size), sizeof(size));
 			outBinary.write(textureName.data(), textureName.size());
 			outASCII << "Texture Name: " << textureName.c_str() << endl;
 		}
@@ -1404,7 +1406,7 @@ void FBXConverter::writeToFile(string pathName)
 			byteCounter += byteOffset;
 			outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-			int vertexCount = this->meshes[index].standardVertices.size();
+			uint32_t vertexCount = this->meshes[index].standardVertices.size();
 
 			vector<Vertex> vertices;
 
@@ -1465,7 +1467,7 @@ void FBXConverter::writeToFile(string pathName)
 
 				outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-				int vertexCount = this->meshes[index].boneVertices.size();
+				uint32_t vertexCount = this->meshes[index].boneVertices.size();
 
 				// Vector of vertices to be filled for output
 				vector<VertexDeformer> vertices;
