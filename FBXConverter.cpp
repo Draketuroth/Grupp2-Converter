@@ -162,7 +162,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		LoadMaterial(currentMesh.meshNode, currentMesh);
 
 		meshes.push_back(currentMesh);
-		int p = meshes[i].meshNode->GetPolygonCount();
+		
 	}
 
 	cout << "[OK] Found " << meshes.size() << " mesh(es) in the format\n\n";
@@ -1614,9 +1614,10 @@ void FBXConverter::writeToFile(string pathName)
 
 				vector<XMFLOAT4X4>animationTransformations[ANIMATIONCOUNT];
 
-				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) {
+				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) 
+				{
 
-					outASCII << "\n-----------------------------------\n" << "Animation" << currentAnimationIndex << "\n-----------------------------------\n";
+					outASCII << "\n-----------------------------------\n" << "Animation: " << currentAnimationIndex << "\n-----------------------------------\n";
 					outASCII << "Animation Byte Start: " << byteCounter << "\n";
 
 					// Get the current animation length
@@ -1635,7 +1636,7 @@ void FBXConverter::writeToFile(string pathName)
 
 						int animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
 
-						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex << animationLength; currentKeyFrameIndex++) {
+						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
 							FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;
 							XMFLOAT4X4 jointGlobalTransform = Load4X4Transformations(keyframe);
@@ -1647,6 +1648,44 @@ void FBXConverter::writeToFile(string pathName)
 					}
 
 					outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
+
+				}
+
+				outASCII << "--------------------------------------------------" << "LIGHTS" << "--------------------------------------------------" << endl;
+				vector<ExportLights> expLights;
+				for (int currentLight = 0; currentLight < lights.size(); currentLight++)
+				{
+					outASCII << "\n-----------------------------------\n" << "Light: " << currentLight+1 << "\n-----------------------------------\n";
+					outASCII << "Lights Byte Start: " << byteCounter << "\n";
+					
+
+					expLights[currentLight].name = lights[currentLight].name;
+
+					expLights[currentLight].Pos.x = lights[currentLight].position.x;
+					expLights[currentLight].Pos.y = lights[currentLight].position.y;
+					expLights[currentLight].Pos.z = lights[currentLight].position.z;
+
+					expLights[currentLight].Color.x = lights[currentLight].color.x;
+					expLights[currentLight].Color.y = lights[currentLight].color.y;
+					expLights[currentLight].Color.z = lights[currentLight].color.z;
+
+					outASCII << " Name: " << expLights[currentLight].name << endl;
+
+					outASCII << " Pos.x: " << expLights[currentLight].Pos.x << endl;
+					outASCII << " Pos.y: " << expLights[currentLight].Pos.y << endl;
+					outASCII << " Pos.z: " << expLights[currentLight].Pos.z << endl;
+
+					outASCII << " Color.r: " << expLights[currentLight].Color.x << endl;
+					outASCII << " Color.g: " << expLights[currentLight].Color.y << endl;
+					outASCII << " Color.b: " << expLights[currentLight].Color.z << endl;
+
+					size_t LightName = expLights[currentLight].name.size();
+					outBinary.write(reinterpret_cast<char*>(&LightName), sizeof(LightName));
+					outBinary.write(expLights[currentLight].name.data(), expLights[currentLight].name.size());
+					outASCII << "Texture Name: " << expLights[currentLight].name.c_str() << endl;
+
+
+					outBinary.write(reinterpret_cast<char*>(expLights.data()), sizeof(expLights[0])*expLights.size());
 
 				}
 
