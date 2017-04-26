@@ -1658,16 +1658,18 @@ void FBXConverter::writeToFile(string pathName)
 					outASCII << "\n-----------------------------------\n" << "Light: " << currentLight+1 << "\n-----------------------------------\n";
 					outASCII << "Lights Byte Start: " << byteCounter << "\n";
 					
+					ExportLights fillerLight;
+					fillerLight.name = lights[currentLight].name;
 
-					expLights[currentLight].name = lights[currentLight].name;
+					fillerLight.Pos.x = lights[currentLight].position.x;
+					fillerLight.Pos.y = lights[currentLight].position.y;
+					fillerLight.Pos.z = lights[currentLight].position.z;
+					
+					fillerLight.Color.x = lights[currentLight].color.x;
+					fillerLight.Color.y = lights[currentLight].color.y;
+					fillerLight.Color.z = lights[currentLight].color.z;
 
-					expLights[currentLight].Pos.x = lights[currentLight].position.x;
-					expLights[currentLight].Pos.y = lights[currentLight].position.y;
-					expLights[currentLight].Pos.z = lights[currentLight].position.z;
-
-					expLights[currentLight].Color.x = lights[currentLight].color.x;
-					expLights[currentLight].Color.y = lights[currentLight].color.y;
-					expLights[currentLight].Color.z = lights[currentLight].color.z;
+					expLights.push_back(fillerLight);
 
 					outASCII << " Name: " << expLights[currentLight].name << endl;
 
@@ -1682,7 +1684,7 @@ void FBXConverter::writeToFile(string pathName)
 					size_t LightName = expLights[currentLight].name.size();
 					outBinary.write(reinterpret_cast<char*>(&LightName), sizeof(LightName));
 					outBinary.write(expLights[currentLight].name.data(), expLights[currentLight].name.size());
-					outASCII << "Texture Name: " << expLights[currentLight].name.c_str() << endl;
+					
 
 
 					outBinary.write(reinterpret_cast<char*>(expLights.data()), sizeof(expLights[0])*expLights.size());

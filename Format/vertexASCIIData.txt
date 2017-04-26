@@ -94228,3 +94228,42 @@ Animation Byte Start: 753404
 Byte offset: 53248
 
 --------------------------------------------------LIGHTS--------------------------------------------------
+
+-----------------------------------
+Light: 1
+-----------------------------------
+Lights Byte Start: 806652
+ Name: pointLight2
+ Pos.x: -0.0285252
+ Pos.y: 8.1056
+ Pos.z: -8.1287
+ Color.r: 0.1939
+ Color.g: 0.1108
+ Color.b: 0.4709
+Texture Name: pointLight2
+
+-----------------------------------
+Light: 2
+-----------------------------------
+Lights Byte Start: 806652
+ Name: directionalLight1
+ Pos.x: -16.6238
+ Pos.y: 0
+ Pos.z: 0
+ Color.r: 1
+ Color.g: 1
+ Color.b: 1
+Texture Name: directionalLight1
+
+-----------------------------------
+Light: 3
+-----------------------------------
+Lights Byte Start: 806652
+ Name: areaLight1
+ Pos.x: 18.3277
+ Pos.y: 9.48877
+ Pos.z: 0
+ Color.r: 1
+ Color.g: 1
+ Color.b: 1
+Texture Name: areaLight1
