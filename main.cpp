@@ -16,8 +16,12 @@
 #include <istream>
 #include <ostream>
 
+#include <windows.h>
+
 // The FBX Converter used to create custom format
 #include "FBXConverter.h"
+
+#include <experimental/filesystem>
 
 //----------------------------------------------------------------------------------------------------------------------------------//
 // HOW TO LINK THE FBX SDK
@@ -38,6 +42,7 @@
 
 using namespace DirectX;
 using namespace std;
+using namespace std::experimental::filesystem;
 
 FBXConverter Converter;
 
@@ -45,8 +50,15 @@ int main() {
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// Memory leak detection flag
 
-	Converter.Load("FbxModel\\cubes.fbx");
-	Converter.writeToFile("vertexASCIIData.txt", "vertexBinaryData.txt");
+	string loadPath = "FbxModel\\cubes.fbx";
+	Converter.Load(loadPath.c_str());
+	
+	//path pathName = current_path();
+	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
+	string folderName = pathName.string() + "/Format";
+
+	create_directory(folderName);
+	Converter.writeToFile(folderName);
 	
 	getchar();
 	

@@ -16,10 +16,13 @@
 
 #include "VertexType.h"
 
+#include <filesystem>
+
 using namespace std;
 using namespace DirectX;
+using namespace std::experimental::filesystem;
 
-#define ANIMATIONCOUNT 2
+#define ANIMATIONCOUNT 1
 
 class FBXConverter {
 
@@ -51,8 +54,10 @@ public:
 	void CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode);
 
 	void LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh);
+
+	bool ExportTexture(Material &objectMaterial, string exportPath);
 	
-	void writeToFile(const char* pathASCII, const char* pathBinary);
+	void writeToFile(string pathName);
 
 	//----------------------------------------------------------------------------------------------------------------------------------//
 	// SECONDARY FUNCTIONS
