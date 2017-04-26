@@ -1672,14 +1672,10 @@ void FBXConverter::writeToFile(string pathName)
 
 		outBinary.write(reinterpret_cast<char*>(cameraProperties.data()), sizeof(XMFLOAT3) * cameraProperties.size());
 
-		outASCII << "CameraPos X: " << cameras[i].position.x << "CameraPos Y: " << cameras[i].position.y << "CameraPos Z: " << cameras[i].position.z << endl;
-		outASCII << "CameraRot X: " << cameras[i].rotation.x << "CameraRot Y: " << cameras[i].rotation.y << "CameraRot Z: " << cameras[i].rotation.z << endl;
-
-	
+		outASCII << "CameraPos X: " << cameras[i].position.x << "  CameraPos Y: " << cameras[i].position.y << "  CameraPos Z: " << cameras[i].position.z << endl;
+		outASCII << "CameraRot X: " << cameras[i].rotation.x << "  CameraRot Y: " << cameras[i].rotation.y << "  CameraRot Z: " << cameras[i].rotation.z << endl;
 
 	}
-
-
 
 		outBinary.close();
 		outASCII.close();
