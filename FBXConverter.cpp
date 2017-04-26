@@ -1626,6 +1626,7 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 	//-------------------------------
 	//	CAMERA HEADER
 	//-------------------------------
+	vector<XMFLOAT3> cameraProperties;
 	for (int i = 0; i < cameras.size(); i++)
 	{
 		outASCII << "--------------------------------------------------" << cameras[i].name.c_str() << " CAMERA" << "--------------------------------------------------" << endl;
@@ -1636,26 +1637,16 @@ void FBXConverter::writeToFile(const char* pathASCII, const char* pathBinary)
 		byteCounter += byteOffset;
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-		float cameraPos[3];
-		float cameraRot[3];
+		
+		cameraProperties.push_back(cameras[i].position);
+		cameraProperties.push_back(cameras[i].rotation);
 
-		cameraPos[0] = this->cameras[i].position.x;
-		outBinary << (char)cameraPos[0];
-		cameraPos[1] = this->cameras[i].position.y;
-		outBinary << (char)cameraPos[1];
-		cameraPos[2] = this->cameras[i].position.z;
-		outBinary << (char)cameraPos[2];
+		outBinary.write(reinterpret_cast<char*>(cameraProperties.data()), sizeof(XMFLOAT3) * cameraProperties.size());
 
-		outASCII << "Position: " << cameraPos[0] << ", " << cameraPos[1] << ", " << cameraPos[2] << endl;
+		outASCII << "CameraPos X: " << cameras[i].position.x << "CameraPos Y: " << cameras[i].position.y << "CameraPos Z: " << cameras[i].position.z << endl;
+		outASCII << "CameraRot X: " << cameras[i].rotation.x << "CameraRot Y: " << cameras[i].rotation.y << "CameraRot Z: " << cameras[i].rotation.z << endl;
 
-		cameraRot[0] = this->cameras[i].rotation.x;
-		outBinary << (char)cameraRot[0];
-		cameraRot[1] = this->cameras[i].rotation.y;
-		outBinary << (char)cameraRot[1];
-		cameraRot[2] = this->cameras[i].rotation.z;
-		outBinary << (char)cameraRot[2];
-
-		outASCII << "Rotation: " << cameraRot[0] << ", " << cameraRot[1] << ", " << cameraRot[2] << endl;
+	
 
 	}
 
