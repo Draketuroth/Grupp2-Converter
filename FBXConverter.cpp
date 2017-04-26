@@ -1295,6 +1295,7 @@ void FBXConverter::writeToFile(string pathName)
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
 
 		vector<XMFLOAT3>meshTransformations;
+
 		XMFLOAT3 meshPosition; // 3 bytes
 		XMFLOAT3 meshRotation; // 3 + 3 bytes
 		XMFLOAT3 meshScale; // 3 + 3 + 3 bytes
