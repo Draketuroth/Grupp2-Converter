@@ -1292,6 +1292,7 @@ void FBXConverter::writeToFile(string pathName)
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
 
 		vector<XMFLOAT3>meshTransformations;
+
 		XMFLOAT3 meshPosition; // 3 bytes
 		XMFLOAT3 meshRotation; // 3 + 3 bytes
 		XMFLOAT3 meshScale; // 3 + 3 + 3 bytes
@@ -1632,7 +1633,7 @@ void FBXConverter::writeToFile(string pathName)
 
 						int animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
 
-						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex << animationLength; currentKeyFrameIndex++) {
+						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
 							FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;
 							XMFLOAT4X4 jointGlobalTransform = Load4X4Transformations(keyframe);
