@@ -119,7 +119,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		"# STEP 2: LOADING THE MESHES AND VERTICES\n"
 		"#----------------------------------------------------------------------------\n" << endl;
 
-	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
+	for (unsigned int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
 
 		Mesh currentMesh;
 
@@ -136,10 +136,11 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 
 			continue;
 		}
+		
 
 		// Get the current mesh node and store it in our own datatype
 		currentMesh.meshNode = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
-
+		
 		// Get name of the current mesh
 		currentMesh.name = currentMesh.meshNode->GetNode()->GetName();
 
@@ -161,12 +162,13 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		LoadMaterial(currentMesh.meshNode, currentMesh);
 
 		meshes.push_back(currentMesh);
+		
 	}
 
 	cout << "[OK] Found " << meshes.size() << " mesh(es) in the format\n\n";
 
-	for (int i = 0; i < meshes.size(); i++) {
-			
+	for (unsigned int i = 0; i < meshes.size(); i++) {
+		
 		cout << "\n-------------------------------------------------------\n"
 			<< "Mesh " << i + 1 <<
 			"\n-------------------------------------------------------\n";
@@ -503,6 +505,7 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 		currentMesh = GetMeshFromRoot(pFbxRootNode, pMesh.name);
 		FbxVector4* pVertices = currentMesh->GetControlPoints();
 
+		int k = currentMesh->GetPolygonCount();
 		for (int j = 0; j < currentMesh->GetPolygonCount(); j++) {
 
 			// Retreive the size of every polygon which should be represented as a triangle
@@ -1623,9 +1626,10 @@ void FBXConverter::writeToFile(string pathName)
 				vector<XMFLOAT4X4>animationTransformations[ANIMATIONCOUNT];
 				vector<uint32_t>animationLengths[ANIMATIONCOUNT];
 
-				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) {
+				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) 
+				{
 
-					outASCII << "\n-----------------------------------\n" << "Animation" << currentAnimationIndex << "\n-----------------------------------\n";
+					outASCII << "\n-----------------------------------\n" << "Animation: " << currentAnimationIndex << "\n-----------------------------------\n";
 					outASCII << "Animation Byte Start: " << byteCounter << "\n";
 
 					// Get the current animation length and push back
@@ -1658,6 +1662,46 @@ void FBXConverter::writeToFile(string pathName)
 
 					outBinary.write(reinterpret_cast<char*>(animationLengths[currentAnimationIndex].data()), sizeof(animationLengths[currentAnimationIndex][0]) * animationLengths[currentAnimationIndex].size());
 					outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
+
+				}
+
+				outASCII << "--------------------------------------------------" << "LIGHTS" << "--------------------------------------------------" << endl;
+				vector<ExportLights> expLights;
+				for (int currentLight = 0; currentLight < lights.size(); currentLight++)
+				{
+					outASCII << "\n-----------------------------------\n" << "Light: " << currentLight+1 << "\n-----------------------------------\n";
+					outASCII << "Lights Byte Start: " << byteCounter << "\n";
+					
+					ExportLights fillerLight;
+					fillerLight.name = lights[currentLight].name;
+
+					fillerLight.Pos.x = lights[currentLight].position.x;
+					fillerLight.Pos.y = lights[currentLight].position.y;
+					fillerLight.Pos.z = lights[currentLight].position.z;
+					
+					fillerLight.Color.x = lights[currentLight].color.x;
+					fillerLight.Color.y = lights[currentLight].color.y;
+					fillerLight.Color.z = lights[currentLight].color.z;
+
+					expLights.push_back(fillerLight);
+
+					outASCII << " Name: " << expLights[currentLight].name << endl;
+
+					outASCII << " Pos.x: " << expLights[currentLight].Pos.x << endl;
+					outASCII << " Pos.y: " << expLights[currentLight].Pos.y << endl;
+					outASCII << " Pos.z: " << expLights[currentLight].Pos.z << endl;
+
+					outASCII << " Color.r: " << expLights[currentLight].Color.x << endl;
+					outASCII << " Color.g: " << expLights[currentLight].Color.y << endl;
+					outASCII << " Color.b: " << expLights[currentLight].Color.z << endl;
+
+					size_t LightName = expLights[currentLight].name.size();
+					outBinary.write(reinterpret_cast<char*>(&LightName), sizeof(LightName));
+					outBinary.write(expLights[currentLight].name.data(), expLights[currentLight].name.size());
+					
+
+
+					outBinary.write(reinterpret_cast<char*>(expLights.data()), sizeof(expLights[0])*expLights.size());
 
 				}
 
