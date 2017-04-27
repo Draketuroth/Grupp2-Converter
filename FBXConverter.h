@@ -22,7 +22,7 @@ using namespace std;
 using namespace DirectX;
 using namespace std::experimental::filesystem;
 
-#define ANIMATIONCOUNT 1
+#define ANIMATIONCOUNT 2
 
 class FBXConverter {
 

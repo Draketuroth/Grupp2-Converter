@@ -342,7 +342,7 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 
 		if (i == 1) {
 
-			currentFilePath = "FbxModel\\stagger.fbx";
+			currentFilePath = "FbxModel\\idle.fbx";
 			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
 
 			if (FAILED(hr)) {
@@ -1215,10 +1215,10 @@ void FBXConverter::writeToFile(string pathName)
 	uint32_t vertexLayout;
 	uint32_t controlPoints;
 	uint32_t hierarchySize;
-	uint32_t keyframes;
+	uint32_t animations;
 	uint32_t hasTexture;
 
-
+	// For every mesh, we must write a sub header since this section of the file is semi-dynamic
 	for (UINT i = 0; i < nrOfMeshes; i++) {
 
 		vertexLayout = this->meshes[i].vertexLayout;
@@ -1227,7 +1227,12 @@ void FBXConverter::writeToFile(string pathName)
 
 			controlPoints = this->meshes[i].boneVertices.size();
 			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
-			keyframes = this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size();
+			animations = ANIMATIONCOUNT;
+
+			meshSubHeaderContent.push_back(vertexLayout);
+			meshSubHeaderContent.push_back(controlPoints);
+			meshSubHeaderContent.push_back(hierarchySize);
+			meshSubHeaderContent.push_back(animations);
 
 		}
 
@@ -1235,12 +1240,20 @@ void FBXConverter::writeToFile(string pathName)
 
 			controlPoints = this->meshes[i].standardVertices.size();
 			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
-			keyframes = 0;
+			animations = 0;
+
+			meshSubHeaderContent.push_back(vertexLayout);
+			meshSubHeaderContent.push_back(controlPoints);
+			meshSubHeaderContent.push_back(hierarchySize);
+			meshSubHeaderContent.push_back(animations);
+
 		}
 
 		if (this->meshes[i].objectMaterial.hasTexture){
 
 			hasTexture = 1;
+
+			meshSubHeaderContent.push_back(hasTexture);
 
 		}
 
@@ -1248,13 +1261,9 @@ void FBXConverter::writeToFile(string pathName)
 
 			hasTexture = 0;
 
-		}
+			meshSubHeaderContent.push_back(hasTexture);
 
-		meshSubHeaderContent.push_back(vertexLayout);
-		meshSubHeaderContent.push_back(controlPoints);
-		meshSubHeaderContent.push_back(hierarchySize);
-		meshSubHeaderContent.push_back(keyframes);
-		meshSubHeaderContent.push_back(hasTexture);
+		}
 
 	}
 
@@ -1268,13 +1277,13 @@ void FBXConverter::writeToFile(string pathName)
 
 		if (this->meshes[i].vertexLayout == 1) {
 
-			outASCII << "Keyframes: " << this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size() << endl; // Number of keyframes
+			outASCII << "Animations: " << ANIMATIONCOUNT << endl; // Number of keyframes
 
 		}
 
 		else {
 
-			outASCII << "Keyframes : " << 0 << endl;
+			outASCII << "Animations: " << 0 << endl;
 		}
 
 		outASCII << "Texture: " << this->meshes[i].objectMaterial.hasTexture << "\n\n"; // If the mesh has a texture
@@ -1610,15 +1619,18 @@ void FBXConverter::writeToFile(string pathName)
 
 				outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
 
+
 				vector<XMFLOAT4X4>animationTransformations[ANIMATIONCOUNT];
+				vector<uint32_t>animationLengths[ANIMATIONCOUNT];
 
 				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) {
 
 					outASCII << "\n-----------------------------------\n" << "Animation" << currentAnimationIndex << "\n-----------------------------------\n";
 					outASCII << "Animation Byte Start: " << byteCounter << "\n";
 
-					// Get the current animation length
-					int currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
+					// Get the current animation length and push back
+					uint32_t currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
+					animationLengths[currentAnimationIndex].push_back(currentAnimLength);
 
 					// The byte offset for every animation will be the size of XMFLOAT4X4 multiplied by the number of joints 
 					// multiplied by the amount of keyframes they hold
@@ -1631,7 +1643,7 @@ void FBXConverter::writeToFile(string pathName)
 
 					for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
 
-						int animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
+						uint32_t animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
 
 						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
@@ -1644,6 +1656,7 @@ void FBXConverter::writeToFile(string pathName)
 
 					}
 
+					outBinary.write(reinterpret_cast<char*>(animationLengths[currentAnimationIndex].data()), sizeof(animationLengths[currentAnimationIndex][0]) * animationLengths[currentAnimationIndex].size());
 					outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
 
 				}
