@@ -59,7 +59,7 @@ struct Joint { // Stores the attributes of a joint node
 	FbxAMatrix GlobalBindposeInverse;
 	FbxAMatrix TransformMatrix;
 	FbxAMatrix TransformLinkMatrix;
-	Animation Animations[2];
+	Animation Animations[5];
 
 	FbxNode* Node;
 

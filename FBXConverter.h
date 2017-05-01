@@ -72,7 +72,6 @@ public:
 	//----------------------------------------------------------------------------------------------------------------------------------//
 
 	HRESULT LoadSceneFile(string fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
-	void setAnimationOrder();
 	void setAnimation(string prefix);
 
 	XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint);

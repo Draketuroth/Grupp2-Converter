@@ -1607,8 +1607,9 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 				outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
 
-				vector<XMFLOAT4X4>animationTransformations[2];
-				vector<uint32_t>animationLengths[2];
+				vector<XMFLOAT4X4> *animationTransformations;
+				animationTransformations = new vector<XMFLOAT4X4>[animationCount];
+				uint32_t animationLengths;
 
 				for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
 				{
@@ -1618,7 +1619,6 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 					// Get the current animation length and push back
 					uint32_t currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
-					animationLengths[currentAnimationIndex].push_back(currentAnimLength);
 
 					// The byte offset for every animation will be the size of XMFLOAT4X4 multiplied by the number of joints 
 					// multiplied by the amount of keyframes they hold
@@ -1644,7 +1644,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 					}
 
-					outBinary.write(reinterpret_cast<char*>(animationLengths[currentAnimationIndex].data()), sizeof(animationLengths[currentAnimationIndex][0]) * animationLengths[currentAnimationIndex].size());
+					outBinary.write(reinterpret_cast<char*>(&currentAnimLength), sizeof(uint32_t));
 					outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
 
 				}
@@ -1799,10 +1799,6 @@ HRESULT FBXConverter::LoadSceneFile(string fileName, FbxManager* gFbxSdkManager,
 	cout << "[OK] File " << fileName << " was successfully loaded into scene " << "\n\n";
 
 	return true;
-}
-
-void FBXConverter::setAnimationOrder() {
-
 }
 
 void FBXConverter::setAnimation(string prefix) {

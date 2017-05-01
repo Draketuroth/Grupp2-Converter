@@ -44,36 +44,42 @@ using namespace DirectX;
 using namespace std;
 using namespace std::experimental::filesystem;
 
-FBXConverter Converter;
+FBXConverter File[2];
 
 int main() {
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// Memory leak detection flag
 
 	string prefix;
-	string loadPath1;
-
-	// Create format folder at export destination path
+	string loadPath;
 
 	//path pathName = current_path();
 	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
 	string folderName = pathName.string() + "/Format";
 	create_directory(folderName);
 
-	// Set the order of the animations to be loaded
-	Converter.animations.push_back("_Run.fbx");
-	Converter.animations.push_back("_Idle.fbx");
-	Converter.animations.push_back("_Death.fbx");
-	Converter.animations.push_back("_MeleeAttack.fbx");
-	Converter.animations.push_back("_RangeAttack.fbx");
-	prefix = "FbxModel\\MainCharacter\\MainCharacter";
-	Converter.setAnimation(prefix);
+	//------------------------------------------------------//
+	// LOAD MAIN CHARACTER
+	//------------------------------------------------------//
 
-	loadPath1 = prefix + "_BindPose.fbx";
-	Converter.Load(loadPath1.c_str());
+	// Set the order of the animations to be loaded
+	File[0].animations.push_back("_Run.fbx");
+	File[0].animations.push_back("_Idle.fbx");
+	File[0].animations.push_back("_Death.fbx");
+	File[0].animations.push_back("_MeleeAttack.fbx");
+	File[0].animations.push_back("_RangeAttack.fbx");
+	prefix = "FbxModel\\MainCharacter\\MainCharacter";
+	File[0].setAnimation(prefix);
+
+	loadPath = prefix + "_BindPose.fbx";
+	File[0].Load(loadPath.c_str());
 
 	// Write the content from the selected files
-	Converter.writeToFile(folderName, "mainResources");
+	File[0].writeToFile(folderName, "mainResources");
+
+	//------------------------------------------------------//
+	// LOAD ICE ENEMY
+	//------------------------------------------------------//
 
 	getchar();
 	
