@@ -528,6 +528,7 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 				// Initialize texture coordinates to store in the output vertex
 				FbxVector2 FBXTexcoord;
 				bool unmapped;
+
 				iControlPointIndex = currentMesh->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);
 
 				vertex.uv.x = (float)FBXTexcoord.mData[0];
@@ -1400,9 +1401,10 @@ void FBXConverter::writeToFile(string pathName)
 			byteCounter += byteOffset;
 
 			// Write texture name to binary and ASCII file
-			size_t size = textureName.size();
-			outBinary.write(reinterpret_cast<char*>(&size), sizeof(size));
-			outBinary.write(textureName.data(), textureName.size());
+			uint32_t size = textureName.size();
+			
+			outBinary.write(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+			outBinary.write(textureName.c_str(), size);
 			outASCII << "Texture Name: " << textureName.c_str() << endl;
 		}
 
