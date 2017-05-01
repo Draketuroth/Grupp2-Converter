@@ -13,8 +13,8 @@ FBXConverter::FBXConverter() {
 }
 
 FBXConverter::~FBXConverter() {
-
-
+	
+	
 }
 
 void FBXConverter::ReleaseAll(FbxManager* gFbxSdkManager) {
@@ -27,7 +27,7 @@ void FBXConverter::ReleaseAll(FbxManager* gFbxSdkManager) {
 	}*/
 }
 
-bool FBXConverter::Load(const char *fileName) {
+bool FBXConverter::Load(string fileName) {
 
 	// Check if the FBX file was loaded properly
 
@@ -41,7 +41,7 @@ bool FBXConverter::Load(const char *fileName) {
 	return true;
 }
 
-bool FBXConverter::LoadFBXFormat(const char *mainFileName) {
+bool FBXConverter::LoadFBXFormat(string mainFileName) {
 
 	cout << "#----------------------------------------------------------------------------\n"
 		"# STEP 1: LOADING THE MAIN FILE\n"
@@ -102,7 +102,7 @@ bool FBXConverter::LoadFBXFormat(const char *mainFileName) {
 
 	pFbxRootNode = pFbxScene->GetRootNode();
 
-	LoadMeshes(pFbxRootNode, gFbxSdkManager, pImporter, pFbxScene);
+	LoadMeshes(pFbxRootNode, gFbxSdkManager, pImporter, pFbxScene, mainFileName);
 
 	LoadLights(pFbxRootNode);
 
@@ -113,7 +113,7 @@ bool FBXConverter::LoadFBXFormat(const char *mainFileName) {
 	return true;
 }
 
-void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName) {
 
 	cout << "\n#----------------------------------------------------------------------------\n"
 		"# STEP 2: LOADING THE MESHES AND VERTICES\n"
@@ -173,7 +173,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 			<< "Mesh " << i + 1 <<
 			"\n-------------------------------------------------------\n";
 
-				CheckSkeleton(meshes[i], pFbxRootNode, gFbxSdkManager, pImporter, pScene);
+				CheckSkeleton(meshes[i], pFbxRootNode, gFbxSdkManager, pImporter, pScene, mainFileName);
 
 				// MESH
 
@@ -236,7 +236,7 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 	}
 }
 
-void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName) {
 	
 	unsigned int deformerCount = pMesh.meshNode->GetDeformerCount();
 	
@@ -250,7 +250,7 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 
 		ProcessControlPoints(pMesh);
 
-		if (!LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene)) {
+		if (!LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene, mainFileName)) {
 
 			cout << "[FATAL ERROR] Animation data from " << pMesh.name.c_str() << " couldn't be loaded\n" << endl;
 		}
@@ -320,16 +320,15 @@ void FBXConverter::RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int dep
 	logFile.close();
 }
 
-bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName) {
 
 	HRESULT hr;
-	const char* currentFilePath;
+	string currentFilePath;
 
-	for (int i = 0; i < ANIMATIONCOUNT; i++) {
+	// Can support up to four animations 
+	for (int i = 0; i < animationCount; i++) {
 
-		if (i == 0) {
-
-			currentFilePath = "FbxModel\\walk.fbx";
+			currentFilePath = animPaths[i];
 			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
 
 			if (FAILED(hr)) {
@@ -340,28 +339,11 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 
 			pFbxRootNode = pScene->GetRootNode();
 
-		}
-
-		if (i == 1) {
-
-			currentFilePath = "FbxModel\\idle.fbx";
-			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
-
-			if (FAILED(hr)) {
-
-				cout << currentFilePath << " wasn't found" << endl;
-				return false;
-			}
-
-			pFbxRootNode = pScene->GetRootNode();
-
-		}
-
-		GatherAnimationData(pMesh, pFbxRootNode, pScene, i);
+			GatherAnimationData(pMesh, pFbxRootNode, pScene, i);
 
 	}
 
-	currentFilePath = "FbxModel\\cubes.fbx";
+	currentFilePath = mainFileName;
 	hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
 
 	if (FAILED(hr)) {
@@ -1164,14 +1146,14 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 
 }
 
-void FBXConverter::writeToFile(string pathName)
+void FBXConverter::writeToFile(string pathName, string fileName)
 {
 	//------------------------------------------------------//
 	// HEADER
 	//------------------------------------------------------//
 
-	string binaryFile = pathName + "/vertexBinaryData.txt";
-	string asciiFile = pathName + "/vertexASCIIData.txt";
+	string binaryFile = pathName + "/" + fileName + "_Binary.txt";
+	string asciiFile = pathName + "/" + fileName + "_ASCII.txt";
 
 	// Create the binary file
 	ofstream outBinary(binaryFile, std::ios::binary);
@@ -1231,7 +1213,7 @@ void FBXConverter::writeToFile(string pathName)
 
 			controlPoints = this->meshes[i].boneVertices.size();
 			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
-			animations = ANIMATIONCOUNT;
+			animations = animationCount;
 
 			meshSubHeaderContent.push_back(vertexLayout);
 			meshSubHeaderContent.push_back(controlPoints);
@@ -1281,7 +1263,7 @@ void FBXConverter::writeToFile(string pathName)
 
 		if (this->meshes[i].vertexLayout == 1) {
 
-			outASCII << "Animations: " << ANIMATIONCOUNT << endl; // Number of keyframes
+			outASCII << "Animations: " << animationCount << endl; // Number of keyframes
 
 		}
 
@@ -1404,7 +1386,8 @@ void FBXConverter::writeToFile(string pathName)
 			uint32_t size = textureName.size();
 			
 			outBinary.write(reinterpret_cast<char*>(&size), sizeof(uint32_t));
-			outBinary.write(textureName.c_str(), size);
+			outBinary.write(reinterpret_cast<char*>(&textureName[0]), size);
+
 			outASCII << "Texture Name: " << textureName.c_str() << endl;
 		}
 
@@ -1624,11 +1607,10 @@ void FBXConverter::writeToFile(string pathName)
 
 				outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
 
+				vector<XMFLOAT4X4>animationTransformations[2];
+				vector<uint32_t>animationLengths[2];
 
-				vector<XMFLOAT4X4>animationTransformations[ANIMATIONCOUNT];
-				vector<uint32_t>animationLengths[ANIMATIONCOUNT];
-
-				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) 
+				for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
 				{
 
 					outASCII << "\n-----------------------------------\n" << "Animation: " << currentAnimationIndex << "\n-----------------------------------\n";
@@ -1794,9 +1776,9 @@ FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node, string meshName) {	// Func
 	return currentMesh;
 }
 
-HRESULT FBXConverter::LoadSceneFile(const char* fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+HRESULT FBXConverter::LoadSceneFile(string fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
 
-	bool bSuccess = pImporter->Initialize(fileName, -1, gFbxSdkManager->GetIOSettings());
+	bool bSuccess = pImporter->Initialize(fileName.c_str(), -1, gFbxSdkManager->GetIOSettings());
 
 	if (!bSuccess) {
 
@@ -1817,6 +1799,25 @@ HRESULT FBXConverter::LoadSceneFile(const char* fileName, FbxManager* gFbxSdkMan
 	cout << "[OK] File " << fileName << " was successfully loaded into scene " << "\n\n";
 
 	return true;
+}
+
+void FBXConverter::setAnimationOrder() {
+
+}
+
+void FBXConverter::setAnimation(string prefix) {
+
+	// Set animation size
+	animationCount = animations.size();
+
+	// Create the required amount of animation paths
+	animPaths = new string[animationCount];
+
+	for(UINT i = 0; i < animationCount; i++){
+
+	animPaths[i] = prefix + animations[i];
+
+	}
 }
 
 XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint) {	// Function to specifically convert joint transformations to XMFLOAT4X4

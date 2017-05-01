@@ -50,16 +50,31 @@ int main() {
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// Memory leak detection flag
 
-	string loadPath = "FbxModel\\cubes.fbx";
-	Converter.Load(loadPath.c_str());
-	
+	string prefix;
+	string loadPath1;
+
+	// Create format folder at export destination path
+
 	//path pathName = current_path();
 	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
 	string folderName = pathName.string() + "/Format";
-
 	create_directory(folderName);
-	Converter.writeToFile(folderName);
-	
+
+	// Set the order of the animations to be loaded
+	Converter.animations.push_back("_Run.fbx");
+	Converter.animations.push_back("_Idle.fbx");
+	Converter.animations.push_back("_Death.fbx");
+	Converter.animations.push_back("_MeleeAttack.fbx");
+	Converter.animations.push_back("_RangeAttack.fbx");
+	prefix = "FbxModel\\MainCharacter\\MainCharacter";
+	Converter.setAnimation(prefix);
+
+	loadPath1 = prefix + "_BindPose.fbx";
+	Converter.Load(loadPath1.c_str());
+
+	// Write the content from the selected files
+	Converter.writeToFile(folderName, "mainResources");
+
 	getchar();
 	
 	return 0;
