@@ -1618,7 +1618,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 					// Get the current animation length and push back
 					uint32_t currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
-
+					
 					// The byte offset for every animation will be the size of XMFLOAT4X4 multiplied by the number of joints 
 					// multiplied by the amount of keyframes they hold
 					byteOffset = (sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size()) * currentAnimLength;
@@ -1631,7 +1631,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 					for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
 
 						uint32_t animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
-
+						
 						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
 							FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;

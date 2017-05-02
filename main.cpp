@@ -53,8 +53,8 @@ int main() {
 	string prefix;
 	string loadPath;
 
-	path pathName = current_path();
-	//path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
+	//path pathName = current_path();
+	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
 	string folderName = pathName.string() + "/Format";
 	create_directory(folderName);
 
@@ -91,7 +91,7 @@ int main() {
 
 	loadPath = prefix + "_BindPose.fbx";
 	File[1].Load(loadPath.c_str());
-
+	
 	// Write the content from the selected files
 	File[1].writeToFile(folderName, "iceEnemy");
 
