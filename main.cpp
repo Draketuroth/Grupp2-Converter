@@ -75,11 +75,25 @@ int main() {
 	File[0].Load(loadPath.c_str());
 
 	// Write the content from the selected files
-	File[0].writeToFile(folderName, "mainResources");
+	File[0].writeToFile(folderName, "mainCharacter");
 
 	//------------------------------------------------------//
 	// LOAD ICE ENEMY
 	//------------------------------------------------------//
+
+	// Set the order of the animations to be loaded
+	File[1].animations.push_back("_Run.fbx");
+	File[1].animations.push_back("_Idle.fbx");
+	File[1].animations.push_back("_Death.fbx");
+	File[1].animations.push_back("_MeleeAttack.fbx");
+	prefix = "FbxModel\\IceEnemy\\IceEnemy";
+	File[1].setAnimation(prefix);
+
+	loadPath = prefix + "_BindPose.fbx";
+	File[1].Load(loadPath.c_str());
+
+	// Write the content from the selected files
+	File[1].writeToFile(folderName, "iceEnemy");
 
 	getchar();
 	

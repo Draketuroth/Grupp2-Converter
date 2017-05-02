@@ -325,7 +325,7 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 	HRESULT hr;
 	string currentFilePath;
 
-	// Can support up to four animations 
+	// Can support up to five animations 
 	for (int i = 0; i < animationCount; i++) {
 
 			currentFilePath = animPaths[i];
@@ -1609,7 +1609,6 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 				vector<XMFLOAT4X4> *animationTransformations;
 				animationTransformations = new vector<XMFLOAT4X4>[animationCount];
-				uint32_t animationLengths;
 
 				for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
 				{
