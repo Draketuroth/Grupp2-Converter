@@ -53,8 +53,8 @@ int main() {
 	string prefix;
 	string loadPath;
 
-	//path pathName = current_path();
-	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
+	path pathName = current_path();
+	//path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
 	string folderName = pathName.string() + "/Format";
 	create_directory(folderName);
 
