@@ -1197,7 +1197,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 	//------------------------------------------------------//
 
 	vector<uint32_t>meshSubHeaderContent;
-	
+
 	uint32_t vertexLayout;
 	uint32_t controlPoints;
 	uint32_t hierarchySize;
@@ -1209,7 +1209,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 		vertexLayout = this->meshes[i].vertexLayout;
 
-		if (this->meshes[i].vertexLayout == 1){
+		if (this->meshes[i].vertexLayout == 1) {
 
 			controlPoints = this->meshes[i].boneVertices.size();
 			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
@@ -1235,7 +1235,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 		}
 
-		if (this->meshes[i].objectMaterial.hasTexture){
+		if (this->meshes[i].objectMaterial.hasTexture) {
 
 			hasTexture = 1;
 
@@ -1296,12 +1296,12 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 		meshTransformations.push_back(meshPosition);
 
 		outASCII << "Position: " << meshPosition.x << ", " << meshPosition.y << ", " << meshPosition.z << endl;
-		
+
 		meshRotation = this->meshes[index].rotation;
 		meshTransformations.push_back(meshRotation);
 
 		outASCII << "Rotation: " << meshRotation.x << ", " << meshRotation.y << ", " << meshRotation.z << endl;
-		
+
 		meshScale = this->meshes[index].meshScale;
 		meshTransformations.push_back(meshScale);
 
@@ -1384,7 +1384,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 			// Write texture name to binary and ASCII file
 			uint32_t size = textureName.size();
-			
+
 			outBinary.write(reinterpret_cast<char*>(&size), sizeof(uint32_t));
 			outBinary.write(reinterpret_cast<char*>(&textureName[0]), size);
 
@@ -1453,294 +1453,256 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 		}
 
-			else {
+		else {
 
-				outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
+			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
 
-				outASCII << "Vertices Byte Start: " << byteCounter << "\n";
+			outASCII << "Vertices Byte Start: " << byteCounter << "\n";
 
-				// The byte offset will be the size of this vertex type and how many vertices there are in the mesh
-				byteOffset = sizeof(VertexDeformer) * this->meshes[index].boneVertices.size();
+			// The byte offset will be the size of this vertex type and how many vertices there are in the mesh
+			byteOffset = sizeof(VertexDeformer) * this->meshes[index].boneVertices.size();
+			byteCounter += byteOffset;
+
+			outASCII << "Byte offset: " << byteOffset << "\n\n";
+
+			uint32_t vertexCount = this->meshes[index].boneVertices.size();
+
+			// Vector of vertices to be filled for output
+			vector<VertexDeformer> vertices;
+
+			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+
+				VertexDeformer vertexData;
+
+				// Position
+				vertexData.pos[0] = this->meshes[index].boneVertices[vertexIndex].pos.x;
+				vertexData.pos[1] = this->meshes[index].boneVertices[vertexIndex].pos.y;
+				vertexData.pos[2] = this->meshes[index].boneVertices[vertexIndex].pos.z;
+
+				outASCII << "Position: " << vertexData.pos[0] << ", " << vertexData.pos[1] << ", " << vertexData.pos[2] << endl;
+
+				// UV-coordinates
+				vertexData.uv[0] = this->meshes[index].boneVertices[vertexIndex].uv.x;
+				vertexData.uv[1] = this->meshes[index].boneVertices[vertexIndex].uv.y;
+
+				outASCII << "UV-Coordinates: " << vertexData.uv[0] << ", " << vertexData.uv[1] << endl;
+
+				// Normals
+				vertexData.normal[0] = this->meshes[index].boneVertices[vertexIndex].normal.x;
+				vertexData.normal[1] = this->meshes[index].boneVertices[vertexIndex].normal.y;
+				vertexData.normal[2] = this->meshes[index].boneVertices[vertexIndex].normal.z;
+
+				outASCII << "Normal: " << vertexData.normal[0] << ", " << vertexData.normal[1] << ", " << vertexData.normal[2] << endl;
+
+				// Binormal
+				vertexData.binormal[0] = this->meshes[index].boneVertices[vertexIndex].BiNormal.x;
+				vertexData.binormal[1] = this->meshes[index].boneVertices[vertexIndex].BiNormal.y;
+				vertexData.binormal[2] = this->meshes[index].boneVertices[vertexIndex].BiNormal.z;
+
+				outASCII << "Binormal: " << vertexData.binormal[0] << ", " << vertexData.binormal[1] << ", " << vertexData.binormal[2] << endl;
+
+				// Tangent
+				vertexData.tangent[0] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.x;
+				vertexData.tangent[1] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.y;
+				vertexData.tangent[2] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.z;
+
+				outASCII << "Tangent: " << vertexData.tangent[0] << ", " << vertexData.tangent[1] << ", " << vertexData.tangent[2] << endl;
+
+				// Weights
+				vertexData.weights[0] = this->meshes[index].boneVertices[vertexIndex].weights[0];
+				vertexData.weights[1] = this->meshes[index].boneVertices[vertexIndex].weights[1];
+				vertexData.weights[2] = this->meshes[index].boneVertices[vertexIndex].weights[2];
+				vertexData.weights[3] = this->meshes[index].boneVertices[vertexIndex].weights[3];
+
+				// Weight Indices
+				vertexData.boneIndices[0] = this->meshes[index].boneVertices[vertexIndex].boneIndices[0];
+				vertexData.boneIndices[1] = this->meshes[index].boneVertices[vertexIndex].boneIndices[1];
+				vertexData.boneIndices[2] = this->meshes[index].boneVertices[vertexIndex].boneIndices[2];
+				vertexData.boneIndices[3] = this->meshes[index].boneVertices[vertexIndex].boneIndices[3];
+
+				outASCII << "Weight Pairs: \n"
+					<< vertexData.weights[0] << ", " << vertexData.boneIndices[0] << "\n"
+					<< vertexData.weights[1] << ", " << vertexData.boneIndices[1] << "\n"
+					<< vertexData.weights[2] << ", " << vertexData.boneIndices[2] << "\n"
+					<< vertexData.weights[3] << ", " << vertexData.boneIndices[3] << "\n\n";
+
+				vertices.push_back(vertexData);
+			}
+
+			// Write vertices to binary file
+			outBinary.write(reinterpret_cast<char*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
+
+			//------------------------------------------------------//
+			// LOAD BINDPOSE MATRICES
+			//------------------------------------------------------//
+
+			outASCII << "--------------------------------------------------" << "BINDPOSE MATRICES" << "--------------------------------------------------" << endl;
+
+			outASCII << "Bindposes Byte Start: " << byteCounter << "\n\n";
+
+			// Byte offset will be the size of an XMFLOAT4X4 multiplied by the number of joints in the skeleton
+			byteOffset = sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size();
+			byteCounter += byteOffset;
+
+			outASCII << "Byte offset: " << byteOffset << "\n";
+
+			XMVECTOR scaleVector;
+			XMFLOAT4 scaleFloat;
+			XMVECTOR rotateVector;
+			XMFLOAT4 rotateFloat;
+			XMVECTOR translateVector;
+			XMFLOAT4 translateFloat;
+			XMFLOAT3 nullFloat = { 0, 0, 0 };
+
+			// Vector to fill with bindposes
+			vector<XMFLOAT4X4>bindPoseMatrices;
+
+			for (int jointIndex = 0; jointIndex < this->meshes[index].skeleton.hierarchy.size(); jointIndex++) {
+
+				// Get the bindpose
+				XMFLOAT4X4 bindPoseMatrix;
+				XMMATRIX inversedBindPoseXM = Load4X4JointTransformations(this->meshes[index].skeleton.hierarchy[jointIndex]); // converts from float4x4 too xmmatrix
+
+				// Push back to matrix vector
+				XMStoreFloat4x4(&bindPoseMatrix, inversedBindPoseXM);
+				bindPoseMatrices.push_back(bindPoseMatrix);
+
+				// Zero out XMVECTORS
+				scaleVector = XMLoadFloat3(&nullFloat);
+				rotateVector = XMLoadFloat3(&nullFloat);
+				translateVector = XMLoadFloat3(&nullFloat);
+
+				// Decompose matrix for ASCII writing
+				XMMatrixDecompose(&scaleVector, &rotateVector, &translateVector, inversedBindPoseXM);
+
+				// Store the XMVECTORS in XMFLOATS
+				XMStoreFloat4(&scaleFloat, scaleVector);
+				XMStoreFloat4(&rotateFloat, rotateVector);
+				XMStoreFloat4(&translateFloat, translateVector);
+
+				// Print out the bindpose matrices values
+				outASCII << "BINDPOSE MATRIX " << jointIndex << "\n---------------------------------------\nPosition channel: " << endl;
+				outASCII << "X: " << translateFloat.x << "\n";
+				outASCII << "Y: " << translateFloat.y << "\n";
+				outASCII << "Z: " << translateFloat.z << "\n";
+				outASCII << "W: " << translateFloat.w << "\nRotation channel; " << endl;
+
+				outASCII << "X: " << rotateFloat.x << "\n";
+				outASCII << "Y: " << rotateFloat.y << "\n";
+				outASCII << "Z: " << rotateFloat.z << "\n";
+				outASCII << "W: " << rotateFloat.w << "\nScale channel; " << endl;
+
+				outASCII << "X: " << scaleFloat.x << "\n";
+				outASCII << "Y: " << scaleFloat.y << "\n";
+				outASCII << "Z: " << scaleFloat.z << "\n";
+				outASCII << "W: " << scaleFloat.w << "\n\n";
+
+			}
+
+			outBinary.write(reinterpret_cast<char*>(bindPoseMatrices.data()), sizeof(bindPoseMatrices[0]) * bindPoseMatrices.size());
+
+			//------------------------------------------------------//
+			// LOAD ANIMATIONS
+			//------------------------------------------------------//
+
+			outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
+
+			vector<XMFLOAT4X4> *animationTransformations;
+			animationTransformations = new vector<XMFLOAT4X4>[animationCount];
+
+			for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
+			{
+
+				outASCII << "\n-----------------------------------\n" << "Animation: " << currentAnimationIndex << "\n-----------------------------------\n";
+				outASCII << "Animation Byte Start: " << byteCounter << "\n";
+
+				// Get the current animation length and push back
+				uint32_t currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
+
+				// The byte offset for every animation will be the size of XMFLOAT4X4 multiplied by the number of joints 
+				// multiplied by the amount of keyframes they hold
+				byteOffset = (sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size()) * currentAnimLength;
 				byteCounter += byteOffset;
 
 				outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-				uint32_t vertexCount = this->meshes[index].boneVertices.size();
+				int hierarchySize = this->meshes[index].skeleton.hierarchy.size();
 
-				// Vector of vertices to be filled for output
-				vector<VertexDeformer> vertices;
+				for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
 
-				for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+					uint32_t animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
 
-					VertexDeformer vertexData;
+					for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
-					// Position
-					vertexData.pos[0] = this->meshes[index].boneVertices[vertexIndex].pos.x;
-					vertexData.pos[1] = this->meshes[index].boneVertices[vertexIndex].pos.y;
-					vertexData.pos[2] = this->meshes[index].boneVertices[vertexIndex].pos.z;
+						FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;
+						XMFLOAT4X4 jointGlobalTransform = Load4X4Transformations(keyframe);
 
-					outASCII << "Position: " << vertexData.pos[0] << ", " << vertexData.pos[1] << ", " << vertexData.pos[2] << endl;
-
-					// UV-coordinates
-					vertexData.uv[0] = this->meshes[index].boneVertices[vertexIndex].uv.x;
-					vertexData.uv[1] = this->meshes[index].boneVertices[vertexIndex].uv.y;
-
-					outASCII << "UV-Coordinates: " << vertexData.uv[0] << ", " << vertexData.uv[1] << endl;
-
-					// Normals
-					vertexData.normal[0] = this->meshes[index].boneVertices[vertexIndex].normal.x;
-					vertexData.normal[1] = this->meshes[index].boneVertices[vertexIndex].normal.y;
-					vertexData.normal[2] = this->meshes[index].boneVertices[vertexIndex].normal.z;
-
-					outASCII << "Normal: " << vertexData.normal[0] << ", " << vertexData.normal[1] << ", " << vertexData.normal[2] << endl;
-
-					// Binormal
-					vertexData.binormal[0] = this->meshes[index].boneVertices[vertexIndex].BiNormal.x;
-					vertexData.binormal[1] = this->meshes[index].boneVertices[vertexIndex].BiNormal.y;
-					vertexData.binormal[2] = this->meshes[index].boneVertices[vertexIndex].BiNormal.z;
-
-					outASCII << "Binormal: " << vertexData.binormal[0] << ", " << vertexData.binormal[1] << ", " << vertexData.binormal[2] << endl;
-
-					// Tangent
-					vertexData.tangent[0] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.x;
-					vertexData.tangent[1] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.y;
-					vertexData.tangent[2] = this->meshes[index].boneVertices[vertexIndex].TangentNormal.z;
-
-					outASCII << "Tangent: " << vertexData.tangent[0] << ", " << vertexData.tangent[1] << ", " << vertexData.tangent[2] << endl;
-
-					// Weights
-					vertexData.weights[0] = this->meshes[index].boneVertices[vertexIndex].weights[0];
-					vertexData.weights[1] = this->meshes[index].boneVertices[vertexIndex].weights[1];
-					vertexData.weights[2] = this->meshes[index].boneVertices[vertexIndex].weights[2];
-					vertexData.weights[3] = this->meshes[index].boneVertices[vertexIndex].weights[3];
-
-					// Weight Indices
-					vertexData.boneIndices[0] = this->meshes[index].boneVertices[vertexIndex].boneIndices[0];
-					vertexData.boneIndices[1] = this->meshes[index].boneVertices[vertexIndex].boneIndices[1];
-					vertexData.boneIndices[2] = this->meshes[index].boneVertices[vertexIndex].boneIndices[2];
-					vertexData.boneIndices[3] = this->meshes[index].boneVertices[vertexIndex].boneIndices[3];
-
-					outASCII << "Weight Pairs: \n"
-						<< vertexData.weights[0] << ", " << vertexData.boneIndices[0] << "\n"
-						<< vertexData.weights[1] << ", " << vertexData.boneIndices[1] << "\n"
-						<< vertexData.weights[2] << ", " << vertexData.boneIndices[2] << "\n"
-						<< vertexData.weights[3] << ", " << vertexData.boneIndices[3] << "\n\n";
-
-					vertices.push_back(vertexData);
-				}
-
-				// Write vertices to binary file
-				outBinary.write(reinterpret_cast<char*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
-
-				//------------------------------------------------------//
-				// LOAD BINDPOSE MATRICES
-				//------------------------------------------------------//
-
-				outASCII << "--------------------------------------------------" << "BINDPOSE MATRICES" << "--------------------------------------------------" << endl;
-
-				outASCII << "Bindposes Byte Start: " << byteCounter << "\n\n";
-
-				// Byte offset will be the size of an XMFLOAT4X4 multiplied by the number of joints in the skeleton
-				byteOffset = sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size();
-				byteCounter += byteOffset;
-
-				outASCII << "Byte offset: " << byteOffset << "\n";
-
-				XMVECTOR scaleVector;
-				XMFLOAT4 scaleFloat;
-				XMVECTOR rotateVector;
-				XMFLOAT4 rotateFloat;
-				XMVECTOR translateVector;
-				XMFLOAT4 translateFloat;
-				XMFLOAT3 nullFloat = { 0, 0, 0 };
-
-				// Vector to fill with bindposes
-				vector<XMFLOAT4X4>bindPoseMatrices;
-
-				for (int jointIndex = 0; jointIndex < this->meshes[index].skeleton.hierarchy.size(); jointIndex++) {
-
-					// Get the bindpose
-					XMFLOAT4X4 bindPoseMatrix;
-					XMMATRIX inversedBindPoseXM = Load4X4JointTransformations(this->meshes[index].skeleton.hierarchy[jointIndex]); // converts from float4x4 too xmmatrix
-					
-					// Push back to matrix vector
-					XMStoreFloat4x4(&bindPoseMatrix, inversedBindPoseXM);
-					bindPoseMatrices.push_back(bindPoseMatrix);
-
-					// Zero out XMVECTORS
-					scaleVector = XMLoadFloat3(&nullFloat);
-					rotateVector = XMLoadFloat3(&nullFloat);
-					translateVector = XMLoadFloat3(&nullFloat);
-					
-					// Decompose matrix for ASCII writing
-					XMMatrixDecompose(&scaleVector, &rotateVector, &translateVector, inversedBindPoseXM);
-
-					// Store the XMVECTORS in XMFLOATS
-					XMStoreFloat4(&scaleFloat, scaleVector);
-					XMStoreFloat4(&rotateFloat, rotateVector);
-					XMStoreFloat4(&translateFloat, translateVector);
-
-					// Print out the bindpose matrices values
-					outASCII << "BINDPOSE MATRIX " << jointIndex << "\n---------------------------------------\nPosition channel: " << endl;
-					outASCII << "X: " << translateFloat.x << "\n";
-					outASCII << "Y: " << translateFloat.y << "\n";
-					outASCII << "Z: " << translateFloat.z << "\n";
-					outASCII << "W: " << translateFloat.w << "\nRotation channel; " << endl;
-
-					outASCII << "X: " << rotateFloat.x << "\n";
-					outASCII << "Y: " << rotateFloat.y << "\n";
-					outASCII << "Z: " << rotateFloat.z << "\n";
-					outASCII << "W: " << rotateFloat.w << "\nScale channel; " << endl;
-
-					outASCII << "X: " << scaleFloat.x << "\n";
-					outASCII << "Y: " << scaleFloat.y << "\n";
-					outASCII << "Z: " << scaleFloat.z << "\n";
-					outASCII << "W: " << scaleFloat.w << "\n\n";
-
-				}
-
-				outBinary.write(reinterpret_cast<char*>(bindPoseMatrices.data()), sizeof(bindPoseMatrices[0]) * bindPoseMatrices.size());
-
-				//------------------------------------------------------//
-				// LOAD ANIMATIONS
-				//------------------------------------------------------//
-
-				outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
-
-				vector<XMFLOAT4X4> *animationTransformations;
-				animationTransformations = new vector<XMFLOAT4X4>[animationCount];
-
-				for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
-				{
-
-					outASCII << "\n-----------------------------------\n" << "Animation: " << currentAnimationIndex << "\n-----------------------------------\n";
-					outASCII << "Animation Byte Start: " << byteCounter << "\n";
-
-					// Get the current animation length and push back
-					uint32_t currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
-					
-					// The byte offset for every animation will be the size of XMFLOAT4X4 multiplied by the number of joints 
-					// multiplied by the amount of keyframes they hold
-					byteOffset = (sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size()) * currentAnimLength;
-					byteCounter += byteOffset;
-
-					outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-					int hierarchySize = this->meshes[index].skeleton.hierarchy.size();
-
-					for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
-
-						uint32_t animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
-						
-						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
-
-							FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;
-							XMFLOAT4X4 jointGlobalTransform = Load4X4Transformations(keyframe);
-							
-							animationTransformations[currentAnimationIndex].push_back(jointGlobalTransform);
-
-						}
+						animationTransformations[currentAnimationIndex].push_back(jointGlobalTransform);
 
 					}
 
-					outBinary.write(reinterpret_cast<char*>(&currentAnimLength), sizeof(uint32_t));
-					outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
-
 				}
 
-				outASCII << "--------------------------------------------------" << "LIGHTS" << "--------------------------------------------------" << endl;
-				vector<ExportLights> expLights;
-				for (int currentLight = 0; currentLight < lights.size(); currentLight++)
-				{
-					outASCII << "\n-----------------------------------\n" << "Light: " << currentLight+1 << "\n-----------------------------------\n";
-					outASCII << "Lights Byte Start: " << byteCounter << "\n";
-					
-					ExportLights fillerLight;
-					fillerLight.name = lights[currentLight].name;
-
-					fillerLight.Pos.x = lights[currentLight].position.x;
-					fillerLight.Pos.y = lights[currentLight].position.y;
-					fillerLight.Pos.z = lights[currentLight].position.z;
-					
-					fillerLight.Color.x = lights[currentLight].color.x;
-					fillerLight.Color.y = lights[currentLight].color.y;
-					fillerLight.Color.z = lights[currentLight].color.z;
-
-					expLights.push_back(fillerLight);
-
-					outASCII << " Name: " << expLights[currentLight].name << endl;
-
-					outASCII << " Pos.x: " << expLights[currentLight].Pos.x << endl;
-					outASCII << " Pos.y: " << expLights[currentLight].Pos.y << endl;
-					outASCII << " Pos.z: " << expLights[currentLight].Pos.z << endl;
-
-					outASCII << " Color.r: " << expLights[currentLight].Color.x << endl;
-					outASCII << " Color.g: " << expLights[currentLight].Color.y << endl;
-					outASCII << " Color.b: " << expLights[currentLight].Color.z << endl;
-
-					size_t LightName = expLights[currentLight].name.size();
-					outBinary.write(reinterpret_cast<char*>(&LightName), sizeof(LightName));
-					outBinary.write(expLights[currentLight].name.data(), expLights[currentLight].name.size());
-					
-
-
-					outBinary.write(reinterpret_cast<char*>(expLights.data()), sizeof(expLights[0])*expLights.size());
-
-				}
+				outBinary.write(reinterpret_cast<char*>(&currentAnimLength), sizeof(uint32_t));
+				outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
 
 			}
 
 		}
-		
-	//-------------------------------
-	//	CAMERA HEADER
-	//-------------------------------
-	vector<XMFLOAT3> cameraProperties;
-	for (int i = 0; i < cameras.size(); i++)
-	{
-		outASCII << "--------------------------------------------------" << cameras[i].name.c_str() << "CAMERA" << "--------------------------------------------------" << endl;
-
-		// Add byte offset for the camera position and rotation
-		outASCII << "Camera Properties Byte Start: " << byteCounter << "\n";
-		byteOffset = sizeof(float) * 6;	// Camera position and camera rotation requires 6 floats in byte offset
-		byteCounter += byteOffset;
-		outASCII << "Byte offset: " << byteOffset << "\n\n";
-
-		
-		cameraProperties.push_back(cameras[i].position);
-		cameraProperties.push_back(cameras[i].rotation);
-
-		outBinary.write(reinterpret_cast<char*>(cameraProperties.data()), sizeof(XMFLOAT3) * cameraProperties.size());
-
-		outASCII << "CameraPos X: " << cameras[i].position.x << "  CameraPos Y: " << cameras[i].position.y << "  CameraPos Z: " << cameras[i].position.z << endl;
-		outASCII << "CameraRot X: " << cameras[i].rotation.x << "  CameraRot Y: " << cameras[i].rotation.y << "  CameraRot Z: " << cameras[i].rotation.z << endl;
 
 	}
 
-	vector<XMFLOAT3> lightproperties;
-	for (size_t i = 0; i < lights.size(); i++)
-	{
-		outASCII << "--------------------------------------------------" << lights[i].name.c_str() << "LIGHT" << "--------------------------------------------------" << endl;
+		//-------------------------------
+		//	CAMERA HEADER
+		//-------------------------------
 
-		// Add byte offset for the camera position and rotation
-		outASCII << "Light Properties Byte Start: " << byteCounter << "\n";
-		byteOffset = sizeof(float) * 6;	// Light position and light color requires 6 floats in byte offset
-		byteCounter += byteOffset;
-		outASCII << "Byte offset: " << byteOffset << "\n\n";
+		for (int i = 0; i < cameras.size(); i++)
+		{
+			vector<XMFLOAT3> cameraProperties;
 
-		lightproperties.push_back(lights[i].position);
-		lightproperties.push_back(lights[i].color);
+			outASCII << "--------------------------------------------------" << cameras[i].name.c_str() << "CAMERA" << "--------------------------------------------------" << endl;
 
-		outBinary.write(reinterpret_cast<char*>(lightproperties.data()), sizeof(XMFLOAT3) * lightproperties.size());
+			// Add byte offset for the camera position and rotation
+			outASCII << "Camera Properties Byte Start: " << byteCounter << "\n";
+			byteOffset = sizeof(float) * 6;	// Camera position and camera rotation requires 6 floats in byte offset
+			byteCounter += byteOffset;
+			outASCII << "Byte offset: " << byteOffset << "\n\n";
 
-		outASCII << "LightPos X: " << lights[i].position.x << "  LightPos Y: " << lights[i].position.y << "  LightPos Z: " << lights[i].position.z << endl;
-		outASCII << "LightColor R: " << lights[i].color.x << "  LightColor G: " << lights[i].color.y << "  LightColor B: " << lights[i].color.z << endl;
-	}
+
+			cameraProperties.push_back(cameras[i].position);
+			cameraProperties.push_back(cameras[i].rotation);
+
+			outBinary.write(reinterpret_cast<char*>(cameraProperties.data()), sizeof(XMFLOAT3) * cameraProperties.size());
+
+			outASCII << "CameraPos X: " << cameras[i].position.x << "  CameraPos Y: " << cameras[i].position.y << "  CameraPos Z: " << cameras[i].position.z << endl;
+			outASCII << "CameraRot X: " << cameras[i].rotation.x << "  CameraRot Y: " << cameras[i].rotation.y << "  CameraRot Z: " << cameras[i].rotation.z << endl;
+
+		}
+
+		for (size_t i = 0; i < lights.size(); i++)
+		{
+			vector<XMFLOAT3> lightproperties;
+			outASCII << "--------------------------------------------------" << lights[i].name.c_str() << "LIGHT" << "--------------------------------------------------" << endl;
+
+			// Add byte offset for the camera position and rotation
+			outASCII << "Light Properties Byte Start: " << byteCounter << "\n";
+			byteOffset = sizeof(float) * 6;	// Light position and light color requires 6 floats in byte offset
+			byteCounter += byteOffset;
+			outASCII << "Byte offset: " << byteOffset << "\n\n";
+
+			lightproperties.push_back(lights[i].position);
+			lightproperties.push_back(lights[i].color);
+
+			outBinary.write(reinterpret_cast<char*>(lightproperties.data()), sizeof(XMFLOAT3) * lightproperties.size());
+
+			outASCII << "LightPos X: " << lights[i].position.x << "  LightPos Y: " << lights[i].position.y << "  LightPos Z: " << lights[i].position.z << endl;
+			outASCII << "LightColor R: " << lights[i].color.x << "  LightColor G: " << lights[i].color.y << "  LightColor B: " << lights[i].color.z << endl;
+		}
+
 		outBinary.close();
 		outASCII.close();
 
-}
-
+	}
 
 FbxAMatrix FBXConverter::GetGeometryTransformation(FbxNode* node) {
 
