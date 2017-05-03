@@ -1698,7 +1698,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 	vector<XMFLOAT3> cameraProperties;
 	for (int i = 0; i < cameras.size(); i++)
 	{
-		outASCII << "--------------------------------------------------" << cameras[i].name.c_str() << " CAMERA" << "--------------------------------------------------" << endl;
+		outASCII << "--------------------------------------------------" << cameras[i].name.c_str() << "CAMERA" << "--------------------------------------------------" << endl;
 
 		// Add byte offset for the camera position and rotation
 		outASCII << "Camera Properties Byte Start: " << byteCounter << "\n";
@@ -1717,6 +1717,25 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 	}
 
+	vector<XMFLOAT3> lightproperties;
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		outASCII << "--------------------------------------------------" << lights[i].name.c_str() << "LIGHT" << "--------------------------------------------------" << endl;
+
+		// Add byte offset for the camera position and rotation
+		outASCII << "Light Properties Byte Start: " << byteCounter << "\n";
+		byteOffset = sizeof(float) * 6;	// Light position and light color requires 6 floats in byte offset
+		byteCounter += byteOffset;
+		outASCII << "Byte offset: " << byteOffset << "\n\n";
+
+		lightproperties.push_back(lights[i].position);
+		lightproperties.push_back(lights[i].color);
+
+		outBinary.write(reinterpret_cast<char*>(lightproperties.data()), sizeof(XMFLOAT3) * lightproperties.size());
+
+		outASCII << "LightPos X: " << lights[i].position.x << "  LightPos Y: " << lights[i].position.y << "  LightPos Z: " << lights[i].position.z << endl;
+		outASCII << "LightColor R: " << lights[i].color.x << "  LightColor G: " << lights[i].color.y << "  LightColor B: " << lights[i].color.z << endl;
+	}
 		outBinary.close();
 		outASCII.close();
 
