@@ -59,4 +59,11 @@ struct VertexDeformer {
 	uint32_t boneIndices[4];
 };
 
+struct ExportLights
+{
+	string name;
+	XMFLOAT3 Pos;
+	XMFLOAT3 Color;
+};
+
 #endif

@@ -44,22 +44,57 @@ using namespace DirectX;
 using namespace std;
 using namespace std::experimental::filesystem;
 
-FBXConverter Converter;
+FBXConverter File[2];
 
 int main() {
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// Memory leak detection flag
 
-	string loadPath = "FbxModel\\cubes.fbx";
-	Converter.Load(loadPath.c_str());
-	
-	path pathName = current_path();
-	//path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
-	string folderName = pathName.string() + "/Format";
+	string prefix;
+	string loadPath;
 
+	//path pathName = current_path();
+	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
+	string folderName = pathName.string() + "/Format";
 	create_directory(folderName);
-	Converter.writeToFile(folderName);
+
+	//------------------------------------------------------//
+	// LOAD MAIN CHARACTER
+	//------------------------------------------------------//
+
+	// Set the order of the animations to be loaded
+	File[0].animations.push_back("_Run.fbx");
+	File[0].animations.push_back("_Idle.fbx");
+	File[0].animations.push_back("_Death.fbx");
+	File[0].animations.push_back("_MeleeAttack.fbx");
+	File[0].animations.push_back("_RangeAttack.fbx");
+	prefix = "FbxModel\\MainCharacter\\MainCharacter";
+	File[0].setAnimation(prefix);
+
+	loadPath = prefix + "_BindPose.fbx";
+	File[0].Load(loadPath.c_str());
+
+	// Write the content from the selected files
+	File[0].writeToFile(folderName, "mainCharacter");
+
+	//------------------------------------------------------//
+	// LOAD ICE ENEMY
+	//------------------------------------------------------//
+
+	// Set the order of the animations to be loaded
+	File[1].animations.push_back("_Run.fbx");
+	File[1].animations.push_back("_Idle.fbx");
+	File[1].animations.push_back("_Death.fbx");
+	File[1].animations.push_back("_MeleeAttack.fbx");
+	prefix = "FbxModel\\IceEnemy\\IceEnemy";
+	File[1].setAnimation(prefix);
+
+	loadPath = prefix + "_BindPose.fbx";
+	File[1].Load(loadPath.c_str());
 	
+	// Write the content from the selected files
+	File[1].writeToFile(folderName, "iceEnemy");
+
 	getchar();
 	
 	return 0;

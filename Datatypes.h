@@ -59,7 +59,7 @@ struct Joint { // Stores the attributes of a joint node
 	FbxAMatrix GlobalBindposeInverse;
 	FbxAMatrix TransformMatrix;
 	FbxAMatrix TransformLinkMatrix;
-	Animation Animations[2];
+	Animation Animations[5];
 
 	FbxNode* Node;
 
@@ -148,7 +148,7 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 struct Light {
 
 	FbxLight* lightNode;
-	const char* name;
+	string name;
 	XMFLOAT3 color;
 	XMFLOAT3 position;
 };

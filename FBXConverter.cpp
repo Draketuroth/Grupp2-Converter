@@ -13,8 +13,8 @@ FBXConverter::FBXConverter() {
 }
 
 FBXConverter::~FBXConverter() {
-
-
+	
+	
 }
 
 void FBXConverter::ReleaseAll(FbxManager* gFbxSdkManager) {
@@ -27,7 +27,7 @@ void FBXConverter::ReleaseAll(FbxManager* gFbxSdkManager) {
 	}*/
 }
 
-bool FBXConverter::Load(const char *fileName) {
+bool FBXConverter::Load(string fileName) {
 
 	// Check if the FBX file was loaded properly
 
@@ -41,7 +41,7 @@ bool FBXConverter::Load(const char *fileName) {
 	return true;
 }
 
-bool FBXConverter::LoadFBXFormat(const char *mainFileName) {
+bool FBXConverter::LoadFBXFormat(string mainFileName) {
 
 	cout << "#----------------------------------------------------------------------------\n"
 		"# STEP 1: LOADING THE MAIN FILE\n"
@@ -102,7 +102,7 @@ bool FBXConverter::LoadFBXFormat(const char *mainFileName) {
 
 	pFbxRootNode = pFbxScene->GetRootNode();
 
-	LoadMeshes(pFbxRootNode, gFbxSdkManager, pImporter, pFbxScene);
+	LoadMeshes(pFbxRootNode, gFbxSdkManager, pImporter, pFbxScene, mainFileName);
 
 	LoadLights(pFbxRootNode);
 
@@ -113,13 +113,13 @@ bool FBXConverter::LoadFBXFormat(const char *mainFileName) {
 	return true;
 }
 
-void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName) {
 
 	cout << "\n#----------------------------------------------------------------------------\n"
 		"# STEP 2: LOADING THE MESHES AND VERTICES\n"
 		"#----------------------------------------------------------------------------\n" << endl;
 
-	for (int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
+	for (unsigned int i = 0; i < pFbxRootNode->GetChildCount(); i++) {	// Get number of children nodes from the root node
 
 		Mesh currentMesh;
 
@@ -136,10 +136,11 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 
 			continue;
 		}
+		
 
 		// Get the current mesh node and store it in our own datatype
 		currentMesh.meshNode = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
-
+		
 		// Get name of the current mesh
 		currentMesh.name = currentMesh.meshNode->GetNode()->GetName();
 
@@ -161,17 +162,18 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		LoadMaterial(currentMesh.meshNode, currentMesh);
 
 		meshes.push_back(currentMesh);
+		
 	}
 
 	cout << "[OK] Found " << meshes.size() << " mesh(es) in the format\n\n";
 
-	for (int i = 0; i < meshes.size(); i++) {
-			
+	for (unsigned int i = 0; i < meshes.size(); i++) {
+		
 		cout << "\n-------------------------------------------------------\n"
 			<< "Mesh " << i + 1 <<
 			"\n-------------------------------------------------------\n";
 
-				CheckSkeleton(meshes[i], pFbxRootNode, gFbxSdkManager, pImporter, pScene);
+				CheckSkeleton(meshes[i], pFbxRootNode, gFbxSdkManager, pImporter, pScene, mainFileName);
 
 				// MESH
 
@@ -234,7 +236,7 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 	}
 }
 
-void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName) {
 	
 	unsigned int deformerCount = pMesh.meshNode->GetDeformerCount();
 	
@@ -248,7 +250,7 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 
 		ProcessControlPoints(pMesh);
 
-		if (!LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene)) {
+		if (!LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene, mainFileName)) {
 
 			cout << "[FATAL ERROR] Animation data from " << pMesh.name.c_str() << " couldn't be loaded\n" << endl;
 		}
@@ -318,16 +320,15 @@ void FBXConverter::RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int dep
 	logFile.close();
 }
 
-bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName) {
 
 	HRESULT hr;
-	const char* currentFilePath;
+	string currentFilePath;
 
-	for (int i = 0; i < ANIMATIONCOUNT; i++) {
+	// Can support up to five animations 
+	for (int i = 0; i < animationCount; i++) {
 
-		if (i == 0) {
-
-			currentFilePath = "FbxModel\\walk.fbx";
+			currentFilePath = animPaths[i];
 			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
 
 			if (FAILED(hr)) {
@@ -338,28 +339,11 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 
 			pFbxRootNode = pScene->GetRootNode();
 
-		}
-
-		if (i == 1) {
-
-			currentFilePath = "FbxModel\\stagger.fbx";
-			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
-
-			if (FAILED(hr)) {
-
-				cout << currentFilePath << " wasn't found" << endl;
-				return false;
-			}
-
-			pFbxRootNode = pScene->GetRootNode();
-
-		}
-
-		GatherAnimationData(pMesh, pFbxRootNode, pScene, i);
+			GatherAnimationData(pMesh, pFbxRootNode, pScene, i);
 
 	}
 
-	currentFilePath = "FbxModel\\cubes.fbx";
+	currentFilePath = mainFileName;
 	hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
 
 	if (FAILED(hr)) {
@@ -503,6 +487,7 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 		currentMesh = GetMeshFromRoot(pFbxRootNode, pMesh.name);
 		FbxVector4* pVertices = currentMesh->GetControlPoints();
 
+		int k = currentMesh->GetPolygonCount();
 		for (int j = 0; j < currentMesh->GetPolygonCount(); j++) {
 
 			// Retreive the size of every polygon which should be represented as a triangle
@@ -525,6 +510,7 @@ void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) 
 				// Initialize texture coordinates to store in the output vertex
 				FbxVector2 FBXTexcoord;
 				bool unmapped;
+
 				iControlPointIndex = currentMesh->GetPolygonVertexUV(j, k, "map1", FBXTexcoord, unmapped);
 
 				vertex.uv.x = (float)FBXTexcoord.mData[0];
@@ -1160,14 +1146,14 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 
 }
 
-void FBXConverter::writeToFile(string pathName)
+void FBXConverter::writeToFile(string pathName, string fileName)
 {
 	//------------------------------------------------------//
 	// HEADER
 	//------------------------------------------------------//
 
-	string binaryFile = pathName + "/vertexBinaryData.txt";
-	string asciiFile = pathName + "/vertexASCIIData.txt";
+	string binaryFile = pathName + "/" + fileName + "_Binary.txt";
+	string asciiFile = pathName + "/" + fileName + "_ASCII.txt";
 
 	// Create the binary file
 	ofstream outBinary(binaryFile, std::ios::binary);
@@ -1215,10 +1201,10 @@ void FBXConverter::writeToFile(string pathName)
 	uint32_t vertexLayout;
 	uint32_t controlPoints;
 	uint32_t hierarchySize;
-	uint32_t keyframes;
+	uint32_t animations;
 	uint32_t hasTexture;
 
-
+	// For every mesh, we must write a sub header since this section of the file is semi-dynamic
 	for (UINT i = 0; i < nrOfMeshes; i++) {
 
 		vertexLayout = this->meshes[i].vertexLayout;
@@ -1227,7 +1213,12 @@ void FBXConverter::writeToFile(string pathName)
 
 			controlPoints = this->meshes[i].boneVertices.size();
 			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
-			keyframes = this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size();
+			animations = animationCount;
+
+			meshSubHeaderContent.push_back(vertexLayout);
+			meshSubHeaderContent.push_back(controlPoints);
+			meshSubHeaderContent.push_back(hierarchySize);
+			meshSubHeaderContent.push_back(animations);
 
 		}
 
@@ -1235,12 +1226,20 @@ void FBXConverter::writeToFile(string pathName)
 
 			controlPoints = this->meshes[i].standardVertices.size();
 			hierarchySize = this->meshes[i].skeleton.hierarchy.size();
-			keyframes = 0;
+			animations = 0;
+
+			meshSubHeaderContent.push_back(vertexLayout);
+			meshSubHeaderContent.push_back(controlPoints);
+			meshSubHeaderContent.push_back(hierarchySize);
+			meshSubHeaderContent.push_back(animations);
+
 		}
 
 		if (this->meshes[i].objectMaterial.hasTexture){
 
 			hasTexture = 1;
+
+			meshSubHeaderContent.push_back(hasTexture);
 
 		}
 
@@ -1248,13 +1247,9 @@ void FBXConverter::writeToFile(string pathName)
 
 			hasTexture = 0;
 
-		}
+			meshSubHeaderContent.push_back(hasTexture);
 
-		meshSubHeaderContent.push_back(vertexLayout);
-		meshSubHeaderContent.push_back(controlPoints);
-		meshSubHeaderContent.push_back(hierarchySize);
-		meshSubHeaderContent.push_back(keyframes);
-		meshSubHeaderContent.push_back(hasTexture);
+		}
 
 	}
 
@@ -1268,13 +1263,13 @@ void FBXConverter::writeToFile(string pathName)
 
 		if (this->meshes[i].vertexLayout == 1) {
 
-			outASCII << "Keyframes: " << this->meshes[i].skeleton.hierarchy[0].Animations[0].Sequence.size() << endl; // Number of keyframes
+			outASCII << "Animations: " << animationCount << endl; // Number of keyframes
 
 		}
 
 		else {
 
-			outASCII << "Keyframes : " << 0 << endl;
+			outASCII << "Animations: " << 0 << endl;
 		}
 
 		outASCII << "Texture: " << this->meshes[i].objectMaterial.hasTexture << "\n\n"; // If the mesh has a texture
@@ -1388,9 +1383,11 @@ void FBXConverter::writeToFile(string pathName)
 			byteCounter += byteOffset;
 
 			// Write texture name to binary and ASCII file
-			size_t size = textureName.size();
-			outBinary.write(reinterpret_cast<char*>(&size), sizeof(size));
-			outBinary.write(textureName.data(), textureName.size());
+			uint32_t size = textureName.size();
+			
+			outBinary.write(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+			outBinary.write(reinterpret_cast<char*>(&textureName[0]), size);
+
 			outASCII << "Texture Name: " << textureName.c_str() << endl;
 		}
 
@@ -1610,16 +1607,18 @@ void FBXConverter::writeToFile(string pathName)
 
 				outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
 
-				vector<XMFLOAT4X4>animationTransformations[ANIMATIONCOUNT];
+				vector<XMFLOAT4X4> *animationTransformations;
+				animationTransformations = new vector<XMFLOAT4X4>[animationCount];
 
-				for (int currentAnimationIndex = 0; currentAnimationIndex < ANIMATIONCOUNT; currentAnimationIndex++) {
+				for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
+				{
 
-					outASCII << "\n-----------------------------------\n" << "Animation" << currentAnimationIndex << "\n-----------------------------------\n";
+					outASCII << "\n-----------------------------------\n" << "Animation: " << currentAnimationIndex << "\n-----------------------------------\n";
 					outASCII << "Animation Byte Start: " << byteCounter << "\n";
 
-					// Get the current animation length
-					int currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
-
+					// Get the current animation length and push back
+					uint32_t currentAnimLength = this->meshes[index].skeleton.hierarchy[0].Animations[currentAnimationIndex].Length;
+					
 					// The byte offset for every animation will be the size of XMFLOAT4X4 multiplied by the number of joints 
 					// multiplied by the amount of keyframes they hold
 					byteOffset = (sizeof(XMFLOAT4X4) * this->meshes[index].skeleton.hierarchy.size()) * currentAnimLength;
@@ -1631,8 +1630,8 @@ void FBXConverter::writeToFile(string pathName)
 
 					for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
 
-						int animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
-
+						uint32_t animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
+						
 						for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
 							FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;
@@ -1644,7 +1643,48 @@ void FBXConverter::writeToFile(string pathName)
 
 					}
 
+					outBinary.write(reinterpret_cast<char*>(&currentAnimLength), sizeof(uint32_t));
 					outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
+
+				}
+
+				outASCII << "--------------------------------------------------" << "LIGHTS" << "--------------------------------------------------" << endl;
+				vector<ExportLights> expLights;
+				for (int currentLight = 0; currentLight < lights.size(); currentLight++)
+				{
+					outASCII << "\n-----------------------------------\n" << "Light: " << currentLight+1 << "\n-----------------------------------\n";
+					outASCII << "Lights Byte Start: " << byteCounter << "\n";
+					
+					ExportLights fillerLight;
+					fillerLight.name = lights[currentLight].name;
+
+					fillerLight.Pos.x = lights[currentLight].position.x;
+					fillerLight.Pos.y = lights[currentLight].position.y;
+					fillerLight.Pos.z = lights[currentLight].position.z;
+					
+					fillerLight.Color.x = lights[currentLight].color.x;
+					fillerLight.Color.y = lights[currentLight].color.y;
+					fillerLight.Color.z = lights[currentLight].color.z;
+
+					expLights.push_back(fillerLight);
+
+					outASCII << " Name: " << expLights[currentLight].name << endl;
+
+					outASCII << " Pos.x: " << expLights[currentLight].Pos.x << endl;
+					outASCII << " Pos.y: " << expLights[currentLight].Pos.y << endl;
+					outASCII << " Pos.z: " << expLights[currentLight].Pos.z << endl;
+
+					outASCII << " Color.r: " << expLights[currentLight].Color.x << endl;
+					outASCII << " Color.g: " << expLights[currentLight].Color.y << endl;
+					outASCII << " Color.b: " << expLights[currentLight].Color.z << endl;
+
+					size_t LightName = expLights[currentLight].name.size();
+					outBinary.write(reinterpret_cast<char*>(&LightName), sizeof(LightName));
+					outBinary.write(expLights[currentLight].name.data(), expLights[currentLight].name.size());
+					
+
+
+					outBinary.write(reinterpret_cast<char*>(expLights.data()), sizeof(expLights[0])*expLights.size());
 
 				}
 
@@ -1761,9 +1801,9 @@ FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node, string meshName) {	// Func
 	return currentMesh;
 }
 
-HRESULT FBXConverter::LoadSceneFile(const char* fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
+HRESULT FBXConverter::LoadSceneFile(string fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
 
-	bool bSuccess = pImporter->Initialize(fileName, -1, gFbxSdkManager->GetIOSettings());
+	bool bSuccess = pImporter->Initialize(fileName.c_str(), -1, gFbxSdkManager->GetIOSettings());
 
 	if (!bSuccess) {
 
@@ -1784,6 +1824,21 @@ HRESULT FBXConverter::LoadSceneFile(const char* fileName, FbxManager* gFbxSdkMan
 	cout << "[OK] File " << fileName << " was successfully loaded into scene " << "\n\n";
 
 	return true;
+}
+
+void FBXConverter::setAnimation(string prefix) {
+
+	// Set animation size
+	animationCount = animations.size();
+
+	// Create the required amount of animation paths
+	animPaths = new string[animationCount];
+
+	for(UINT i = 0; i < animationCount; i++){
+
+	animPaths[i] = prefix + animations[i];
+
+	}
 }
 
 XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint) {	// Function to specifically convert joint transformations to XMFLOAT4X4
