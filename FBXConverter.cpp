@@ -388,7 +388,7 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 	// Get the root joint root
 	FbxCluster* currentCluster = currentSkin->GetCluster(0);
 
-	pMesh.skeleton.hierarchy[0].LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform();
+	pMesh.skeleton.hierarchy[0].LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform(FBXSDK_TIME_INFINITE);
 	pMesh.skeleton.hierarchy[0].GlobalTransform = pMesh.skeleton.hierarchy[0].LocalTransform;
 	pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse();
 
@@ -401,7 +401,7 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 		Joint &b = pMesh.skeleton.hierarchy[i];
 
 		// Get the current joint local transformation
-		b.LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform();
+		b.LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform(FBXSDK_TIME_INFINITE);
 
 		// Calculate the current joint global transformation by taking the global transformation of the parent multiplied by this joint local transformation
 		b.GlobalTransform = pMesh.skeleton.hierarchy[b.ParentIndex].GlobalTransform * b.LocalTransform;
@@ -475,7 +475,6 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 			pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence.resize(animationLength);
 
 			for (FbxLongLong i = startTime.GetFrameCount(FbxTime::eFrames24); i <= animationLength - 1; i++) {
-
 
 				FbxTime currentTime;
 				currentTime.SetFrame(i, FbxTime::eFrames24);
@@ -1587,18 +1586,15 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 			XMFLOAT4 translateFloat;
 			XMFLOAT3 nullFloat = { 0, 0, 0 };
 
-			// Vector to fill with bindposes
-			vector<XMFLOAT4X4>bindPoseMatrices;
-
 			for (int jointIndex = 0; jointIndex < this->meshes[index].skeleton.hierarchy.size(); jointIndex++) {
 
 				// Get the bindpose
 				XMFLOAT4X4 bindPoseMatrix;
+				uint32_t parentIndex = this->meshes[index].skeleton.hierarchy[jointIndex].ParentIndex;
 				XMMATRIX inversedBindPoseXM = Load4X4JointTransformations(this->meshes[index].skeleton.hierarchy[jointIndex]); // converts from float4x4 too xmmatrix
 
 				// Push back to matrix vector
 				XMStoreFloat4x4(&bindPoseMatrix, inversedBindPoseXM);
-				bindPoseMatrices.push_back(bindPoseMatrix);
 
 				// Zero out XMVECTORS
 				scaleVector = XMLoadFloat3(&nullFloat);
@@ -1630,9 +1626,10 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 				outASCII << "Z: " << scaleFloat.z << "\n";
 				outASCII << "W: " << scaleFloat.w << "\n\n";
 
-			}
+				outBinary.write(reinterpret_cast<char*>(&parentIndex), sizeof(uint32_t));
+				outBinary.write(reinterpret_cast<char*>(&bindPoseMatrix), sizeof(XMFLOAT4X4));
 
-			outBinary.write(reinterpret_cast<char*>(bindPoseMatrices.data()), sizeof(bindPoseMatrices[0]) * bindPoseMatrices.size());
+			}
 
 			//------------------------------------------------------//
 			// LOAD ANIMATIONS
