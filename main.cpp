@@ -44,7 +44,7 @@ using namespace DirectX;
 using namespace std;
 using namespace std::experimental::filesystem;
 
-FBXConverter File[2];
+FBXConverter File[3];
 
 int main() {
 
@@ -94,6 +94,17 @@ int main() {
 	
 	// Write the content from the selected files
 	File[1].writeToFile(folderName, "iceEnemy");
+
+	//---------------------------------------
+	//		LOAD FORTRESS
+	//---------------------------------------
+	prefix = "FbxModel\\Fortress\\";
+	loadPath = prefix + "Fortress.fbx";
+
+	File[2].Load(loadPath.c_str());
+	File[2].writeToFile(folderName, "Fortress");
+
+
 
 	getchar();
 	
