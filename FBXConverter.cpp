@@ -250,6 +250,8 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 
 		ProcessControlPoints(pMesh);
 
+		CreateBindPose(pMesh, pFbxRootNode, pScene);
+
 		if (!LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene, mainFileName)) {
 
 			cout << "[FATAL ERROR] Animation data from " << pMesh.name.c_str() << " couldn't be loaded\n" << endl;
@@ -358,6 +360,58 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 	return true;
 }
 
+void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
+
+	FbxSkin* currentSkin;
+	FbxMesh* mesh = GetMeshFromRoot(node, pMesh.name);
+	unsigned int deformerCount = mesh->GetDeformerCount();	// A deformer is associated with manipulating geometry through clusters, which are the joints we're after
+
+	FbxAMatrix geometryTransform = GetGeometryTransformation(node); // Geometric offset must be taken into account, even though it's often an identity matrix
+
+	// Get the skin
+	for (unsigned int deformerIndex = 0; deformerIndex < deformerCount; deformerIndex++) {
+
+		// To reach the link to the joint, we must go through a skin node containing the skinning data holding vertex weights from the binded mesh
+
+		currentSkin = reinterpret_cast<FbxSkin*>(mesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
+
+		if (!currentSkin) {
+
+			continue;
+		}
+
+	}
+
+	// Get the number of joints in the hierarchy
+	int NUM_BONES = currentSkin->GetClusterCount();
+
+	// Get the root joint root
+	FbxCluster* currentCluster = currentSkin->GetCluster(0);
+
+	pMesh.skeleton.hierarchy[0].LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform();
+	pMesh.skeleton.hierarchy[0].GlobalTransform = pMesh.skeleton.hierarchy[0].LocalTransform;
+	pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse();
+
+	for (int i = 1; i < NUM_BONES; i++) {
+		
+		// Receive the current cluster
+		currentCluster = currentSkin->GetCluster(i);
+
+		// Create static joint
+		Joint &b = pMesh.skeleton.hierarchy[i];
+
+		// Get the current joint local transformation
+		b.LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform();
+
+		// Calculate the current joint global transformation by taking the global transformation of the parent multiplied by this joint local transformation
+		b.GlobalTransform = pMesh.skeleton.hierarchy[b.ParentIndex].GlobalTransform * b.LocalTransform;
+
+		b.GlobalBindposeInverse = b.GlobalTransform.Inverse();
+
+	}
+
+}
+
 void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* scene, int animIndex) {
 
 	FbxMesh* mesh = GetMeshFromRoot(node, pMesh.name);
@@ -383,28 +437,6 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 			FbxCluster* currentCluster = currentSkin->GetCluster(clusterIndex); // Current joint being processed in the hierarchy
 			std::string currentJointName = currentCluster->GetLink()->GetName();	// Here is the direct link to the joint required to retrieve its name and other attributes
 			unsigned int currentJointIndex = FindJointIndexByName(currentJointName, pMesh.skeleton);	// Call to function to retrieve joint index from skeleton hierarchy
-
-			// Declarations of the required matrices needed to create the Global Bind Pose Inverse matrix for every joint
-
-			FbxAMatrix transformMatrix;
-			FbxAMatrix transformLinkMatrix;
-			FbxAMatrix globalBindPoseInverseMatrix;
-
-			currentCluster->GetTransformMatrix(transformMatrix);	// This is the transformation of the mesh at bind time
-			currentCluster->GetTransformLinkMatrix(transformLinkMatrix);	// The transformation of the cluster (in our case the joint) at binding time from local space to world space
-			globalBindPoseInverseMatrix = transformLinkMatrix.Inverse();// *transformMatrix * geometryTransform;
-
-			ConvertToLeftHanded(transformMatrix);
-			ConvertToLeftHanded(transformLinkMatrix);
-			ConvertToLeftHanded(globalBindPoseInverseMatrix);
-
-			// Next we must update the matrices in the skeleton hierarchy 
-			pMesh.skeleton.hierarchy[currentJointIndex].TransformMatrix = transformMatrix;
-			pMesh.skeleton.hierarchy[currentJointIndex].TransformLinkMatrix = transformLinkMatrix;
-			pMesh.skeleton.hierarchy[currentJointIndex].GlobalBindposeInverse = globalBindPoseInverseMatrix;
-
-			// KFbxNode was used in previous versions of the FBX SDK to receive the cluster link, but now we only use a normal FbxNode
-			pMesh.skeleton.hierarchy[currentJointIndex].Node = currentCluster->GetLink();
 
 			// Associate the joint with the control points it affects
 			unsigned int indicesCount = currentCluster->GetControlPointIndicesCount();
@@ -449,26 +481,26 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 				currentTime.SetFrame(i, FbxTime::eFrames24);
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].TimePos = currentTime.GetFrameCount(FbxTime::eFrames24);
 
-				//FbxAMatrix currentTransformOffset = node->EvaluateGlobalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
-				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform = currentCluster->GetLink()->EvaluateGlobalTransform(currentTime);
+				FbxAMatrix currentTransformOffset = node->EvaluateLocalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
+				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateLocalTransform(currentTime);
 
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Translation = XMFLOAT4(
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[0],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[1],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[2],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetT().mData[3]);
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetT().mData[0],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetT().mData[1],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetT().mData[2],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetT().mData[3]);
 
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Scale = XMFLOAT4(
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[0],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[1],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[2],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetS().mData[3]);
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetS().mData[0],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetS().mData[1],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetS().mData[2],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetS().mData[3]);
 
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].RotationQuat = XMFLOAT4(
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetQ().mData[0],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetQ().mData[1],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetQ().mData[2],
-					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform.GetQ().mData[3]);
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[0],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[1],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[2],
+					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[3]);
 
 			}
 
@@ -1582,7 +1614,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 				XMStoreFloat4(&translateFloat, translateVector);
 
 				// Print out the bindpose matrices values
-				outASCII << "BINDPOSE MATRIX " << jointIndex << "\n---------------------------------------\nPosition channel: " << endl;
+				outASCII << "BINDPOSE MATRIX " << this->meshes[index].skeleton.hierarchy[jointIndex].Name << "\n---------------------------------------\nPosition channel: " << endl;
 				outASCII << "X: " << translateFloat.x << "\n";
 				outASCII << "Y: " << translateFloat.y << "\n";
 				outASCII << "Z: " << translateFloat.z << "\n";
@@ -1635,7 +1667,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 					for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
-						FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].GlobalTransform;
+						FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].LocalTransform;
 						XMFLOAT4X4 jointGlobalTransform = Load4X4Transformations(keyframe);
 
 						animationTransformations[currentAnimationIndex].push_back(jointGlobalTransform);

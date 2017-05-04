@@ -43,6 +43,7 @@ public:
 	void RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int depth, int index, int parentIndex);
 	bool LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName);
 
+	void CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene);
 	void GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* scene, int animIndex);
 
 	void LoadLights(FbxNode* pFbxRootNode);
