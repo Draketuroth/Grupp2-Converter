@@ -54,7 +54,8 @@ int main() {
 	string loadPath;
 
 	//path pathName = current_path();
-	path pathName = "E:\\Litet Spel\\Project\\Lilla-Spelprojektet-Grupp-2";
+	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
+	//path pathName = "E:\\Litet Spel\\Project\\Lilla-Spelprojektet-Grupp-2";
 	string folderName = pathName.string() + "/Format";
 	create_directory(folderName);
 
