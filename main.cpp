@@ -94,7 +94,7 @@ int main() {
 	
 	// Write the content from the selected files
 	File[1].writeToFile(folderName, "iceEnemy");
-
+	
 	//---------------------------------------
 	//		LOAD FORTRESS
 	//---------------------------------------
