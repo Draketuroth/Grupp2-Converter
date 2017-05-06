@@ -388,6 +388,7 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 	// Get the root joint root
 	FbxCluster* currentCluster = currentSkin->GetCluster(0);
 
+	// Initialize the root joint
 	pMesh.skeleton.hierarchy[0].LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform(FBXSDK_TIME_INFINITE);
 	pMesh.skeleton.hierarchy[0].GlobalTransform = pMesh.skeleton.hierarchy[0].LocalTransform;
 	pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse();
@@ -397,16 +398,20 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 		// Receive the current cluster
 		currentCluster = currentSkin->GetCluster(i);
 
-		// Create static joint
+		// Create a reference to the currenct joint to be processed
 		Joint &b = pMesh.skeleton.hierarchy[i];
 
-		// Get the current joint local transformation
+		// Get the current joint LOCAL transformation
 		b.LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform(FBXSDK_TIME_INFINITE);
-
-		// Calculate the current joint global transformation by taking the global transformation of the parent multiplied by this joint local transformation
+		
+		// Calculate the current joint GLOBAL transformation by taking the global transformation of the parent multiplied by this joint LOCAL transformation
 		b.GlobalTransform = pMesh.skeleton.hierarchy[b.ParentIndex].GlobalTransform * b.LocalTransform;
 
+		// The inverse bind pose is calculated by taking the inverse of the joint GLOBAL transformation matrix
 		b.GlobalBindposeInverse = b.GlobalTransform.Inverse();
+
+		// Convert to DirectX left handed coordinate system from Maya's right handed coordinate system 
+		ConvertToLeftHanded(b.GlobalBindposeInverse);
 
 	}
 
@@ -480,8 +485,8 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 				currentTime.SetFrame(i, FbxTime::eFrames24);
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].TimePos = currentTime.GetFrameCount(FbxTime::eFrames24);
 
-				FbxAMatrix currentTransformOffset = node->EvaluateLocalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
-				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateLocalTransform(currentTime);
+				//FbxAMatrix currentTransformOffset = node->EvaluateLocalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
+				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform(currentTime);
 
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Translation = XMFLOAT4(
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetT().mData[0],
@@ -501,10 +506,13 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[2],
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[3]);
 
+				ConvertToLeftHanded(pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform);
+
 			}
 
 		}
 	}
+
 }
 
 void FBXConverter::CreateVertexDataStandard(Mesh &pMesh, FbxNode* pFbxRootNode) {
