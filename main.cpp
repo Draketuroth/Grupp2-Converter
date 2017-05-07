@@ -44,18 +44,31 @@ using namespace DirectX;
 using namespace std;
 using namespace std::experimental::filesystem;
 
+// One instance of an FBX Converter represents an entire file that can contain the following:
+// 1. Standard Meshes ( Geometry without deformer attached )
+// 2. Skinned Meshes ( Geometry with deformer attached )
+// 3. Material Attributes and Texture on the diffuse channel (1 texture per object)
+// 4: Lights
+// 5. Cameras
 FBXConverter File[4];
 
 int main() {
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// Memory leak detection flag
 
+	// Declare strings to quickly change file prefix and loadpath
 	string prefix;
 	string loadPath;
 
-	//path pathName = current_path();
+	// Filesystem can give us the solution directory with a simple function call, or we define our own and store it.
+	// It's important to make sure we're exporting to the same folder where the small game project solution is located
+
+	//path pathName = current_path();	
 	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
 	//path pathName = "E:\\Litet Spel\\Project\\Lilla-Spelprojektet-Grupp-2";
+
+	// Create a folder for all the format files to easily manage them in other project folders
+	// Filesystem can create the folder directory for us given a path based on the previously entered path name
 	string folderName = pathName.string() + "/Format";
 	create_directory(folderName);
 
@@ -63,19 +76,28 @@ int main() {
 	// LOAD MAIN CHARACTER
 	//------------------------------------------------------//
 
+	// 1. 
 	// Set the order of the animations to be loaded
+	// The format is set to allow up to five animations for each skinned mesh. The names are pushed back to a string vector
 	File[0].animations.push_back("_Run.fbx");
 	File[0].animations.push_back("_Idle.fbx");
 	File[0].animations.push_back("_Death.fbx");
 	File[0].animations.push_back("_MeleeAttack.fbx");
 	File[0].animations.push_back("_RangeAttack.fbx");
+
+	// 2.
+	// Set the prefix for the FBX file to be loaded and set the animation paths
 	prefix = "FbxModel\\MainCharacter\\MainCharacter";
 	File[0].setAnimation(prefix);
 
+	// 3.
+	// For skinned meshes, we first want to load the bindpose. It's important that the properties of the animation files remain the same as
+	// in the bindpose file. While the bindpose can be gathered from those as well, this was a way to easier structure the order of loading content
+	// from the FBX format. Then finally, load the FBX file from the given path. 
 	loadPath = prefix + "_BindPose.fbx";
 	File[0].Load(loadPath.c_str());
 
-	// Write the content from the selected files
+	// Write the content from the loaded FBX files
 	File[0].writeToFile(folderName, "mainCharacter");
 
 	//------------------------------------------------------//
@@ -102,6 +124,7 @@ int main() {
 	prefix = "FbxModel\\Fortress\\";
 	loadPath = prefix + "Fortress.fbx";
 
+	// When we're working with static meshes, there is no need to define any animation paths
 	File[2].Load(loadPath.c_str());
 	File[2].writeToFile(folderName, "Fortress");
 
@@ -110,7 +133,8 @@ int main() {
 	//------------------------------------------------------//
 	prefix = "FbxModel\\Platform\\";
 	loadPath = prefix + "Platform.fbx";
-
+	
+	// When we're working with static meshes, there is no need to define any animation paths
 	File[3].Load(loadPath.c_str());
 	File[3].writeToFile(folderName, "Platform");
 
