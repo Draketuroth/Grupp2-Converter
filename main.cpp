@@ -78,7 +78,7 @@ int main() {
 
 	// 1. 
 	// Set the order of the animations to be loaded
-	// The format is set to allow up to five animations for each skinned mesh. The names are pushed back to a string vector
+	// The format is set to allow a largo number of animations for each skinned mesh. The names are pushed back to a string vector
 	File[0].animations.push_back("_Run.fbx");
 	File[0].animations.push_back("_Idle.fbx");
 	File[0].animations.push_back("_Death.fbx");

@@ -81,6 +81,8 @@ public:
 	int animationCount;
 	vector<string>animations;
 	string* animPaths;
+	string logFileName;
+	ofstream logFile;
 
 private:
 

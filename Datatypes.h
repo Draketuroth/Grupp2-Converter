@@ -45,7 +45,7 @@ struct Keyframe { // Stores the attributes of a keyframe in an animation
 
 };
 
-struct Animation {
+struct Animation { // Struct to hold a vector of keyframes and the length of the animation
 
 	vector<Keyframe> Sequence;
 	FbxLongLong Length;
@@ -86,13 +86,13 @@ struct BlendingIndexWeightPair { // Middle hand container to help with passing V
 	{}
 };
 
-struct Texture{
+struct Texture{ // Struct to hold the texture name and its path
 
 	string textureName;
 	string texturePath;
 };
 
-struct Material
+struct Material // Struct to store material attributes
 {
 	bool hasTexture;
 	string materialName;
@@ -121,7 +121,7 @@ struct ControlPoint { // Resembles a physical vertex point in the FBX SDK
 
 };
 
-struct Skeleton { // Stores every joint in the skeleton hierarchy from the loaded FBX file
+struct Skeleton { // Stores every joint in a skeleton hierarchy from the loaded FBX file
 
 	vector<Joint> hierarchy;
 	int hierarchyDepth;

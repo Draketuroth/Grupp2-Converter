@@ -55,14 +55,6 @@ bool FBXConverter::LoadFBXFormat(string mainFileName) {
 	FbxNode* pFbxRootNode = nullptr;
 
 	//------------------------------------------------------------------------------//
-	// CLEAR LOG FILE
-	//------------------------------------------------------------------------------//
-
-	ofstream logFile;
-	logFile.open("log.txt", ios::out);
-	logFile.close();
-
-	//------------------------------------------------------------------------------//
 	// INITIALIZE FBX SDK MANAGER
 	//------------------------------------------------------------------------------//
 
@@ -85,6 +77,8 @@ bool FBXConverter::LoadFBXFormat(string mainFileName) {
 		cout << "[OK] FbxManager was successfully created" << endl;
 	}
 
+	// Create both the FbxImporter and the FbxScene from the FbxSdkManager
+
 	FbxImporter* pImporter = FbxImporter::Create(gFbxSdkManager, "");
 
 	FbxScene* pFbxScene; pFbxScene = FbxScene::Create(gFbxSdkManager, "");
@@ -93,6 +87,7 @@ bool FBXConverter::LoadFBXFormat(string mainFileName) {
 	// LOAD MAIN FILE
 	//------------------------------------------------------------------------------//
 
+	// Load the main file. If it can't be found, destroy the FbxSdkManager and return false
 	hr = LoadSceneFile(mainFileName, gFbxSdkManager, pImporter, pFbxScene);
 	if (FAILED(hr)) {
 
@@ -100,14 +95,19 @@ bool FBXConverter::LoadFBXFormat(string mainFileName) {
 		return false;
 	}
 
+	// Retrieve the root node from the currently opened file. It's the key to all the content in the FBX file.
 	pFbxRootNode = pFbxScene->GetRootNode();
 
+	// Load the meshes from the file
 	LoadMeshes(pFbxRootNode, gFbxSdkManager, pImporter, pFbxScene, mainFileName);
 
+	// Load the lights from the file
 	LoadLights(pFbxRootNode);
 
+	// Load the cameras from the file
 	LoadCameras(pFbxRootNode);
 
+	// When all content has been loaded, destroy the FbxSdkManager
 	ReleaseAll(gFbxSdkManager);
 	
 	return true;
@@ -123,16 +123,16 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 
 		Mesh currentMesh;
 
-		FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);	// Current child being processed in the file
+		FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);	// Current child node being processed in the file
 
-		if (pFbxChildNode->GetNodeAttribute() == NULL) {
+		if (pFbxChildNode->GetNodeAttribute() == NULL) { // Is it a null pointer? If so, continue searching the FBX file.
 
 			continue;
 		}
 		
 		FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();	// Get the attribute type of the child node
 
-		if (AttributeType != FbxNodeAttribute::eMesh) {
+		if (AttributeType != FbxNodeAttribute::eMesh) { // Does it qualify as a mesh? If not, continue searching the FBX file.
 
 			continue;
 		}
@@ -154,11 +154,12 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		currentMesh.rotation.y = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[1];
 		currentMesh.rotation.z = (float)currentMesh.meshNode->GetNode()->LclRotation.Get().mData[2];
 		
-		// the scale of the current mech
+		// The scale of the current mech
 		currentMesh.meshScale.x = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[0]; 
 		currentMesh.meshScale.y = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[1];
 		currentMesh.meshScale.z = (float)currentMesh.meshNode->GetNode()->LclScaling.Get().mData[2];
 
+		// Load the materials of the current mesh
 		LoadMaterial(currentMesh.meshNode, currentMesh);
 
 		meshes.push_back(currentMesh);
@@ -172,10 +173,11 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		cout << "\n-------------------------------------------------------\n"
 			<< "Mesh " << i + 1 <<
 			"\n-------------------------------------------------------\n";
-
+				
+				// Check if there is a deformer attached to the current mesh
 				CheckSkeleton(meshes[i], pFbxRootNode, gFbxSdkManager, pImporter, pScene, mainFileName);
 
-				// MESH
+				// Print the mesh data to the console
 
 				cout << "Name: " << meshes[i].name.c_str() << "\nPosition: {"
 					<< meshes[i].position.x << ", "
@@ -190,7 +192,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 					<< meshes[i].controlPoints.size() << "\n\nMaterial: "
 					<< meshes[i].objectMaterial.materialName.c_str() << "\nType: "
 
-					// MATERIAL
+					// Print the material attributes to the console
 
 					<< meshes[i].objectMaterial.materialType.c_str() << "\n\nDiffuse: "
 					<< meshes[i].objectMaterial.diffuseColor.x << ", "
@@ -206,7 +208,7 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 					<< meshes[i].objectMaterial.specularColor.z << "\nSpecular Factor: "
 					<< meshes[i].objectMaterial.specularFactor << "\n\nTexture Name: "
 
-					// TEXTURE
+					// Print the texture information to the console
 
 					<< meshes[i].objectMaterial.diffuseTexture.textureName.c_str() << "\nTexture Path: "
 					<< meshes[i].objectMaterial.diffuseTexture.texturePath.c_str() << "\n\n";
@@ -217,7 +219,7 @@ void FBXConverter::ProcessControlPoints(Mesh &pMesh) {
 
 	unsigned int controlPointCount = pMesh.meshNode->GetControlPointsCount();	// Store the total amount of control points
 
-	// Loop through all vertices and create individual vertices that are store in the control points vector
+	// Loop through all vertices and create individual vertices that are store in the current mesh's control points vector
 
 	for (unsigned int i = 0; i < controlPointCount; i++) {
 
@@ -240,33 +242,41 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 	
 	unsigned int deformerCount = pMesh.meshNode->GetDeformerCount();
 	
-	if (deformerCount > 0) {
+	if (deformerCount > 0) { // If deformer count is larger than one, there is a deformer attached to the current mesh
 
+		// Set the vertex layout flag
 		pMesh.vertexLayout = 1;
 
 		cout << "[DEFORMER FOUND] Found a joint hierarchy attached to " << pMesh.name.c_str() << "\n\nVERTEX LAYOUT: SKELETAL\n" << endl;
 
+		// Load the skeleton hierarchy
 		LoadSkeletonHierarchy(pFbxRootNode, pMesh);
 
+		// Process the control points
 		ProcessControlPoints(pMesh);
 
+		// Create the bind pose
 		CreateBindPose(pMesh, pFbxRootNode, pScene);
 
+		// Load the available animations for the current mesh
 		if (!LoadAnimations(pMesh, pFbxRootNode, gFbxSdkManager, pImporter, pScene, mainFileName)) {
 
 			cout << "[FATAL ERROR] Animation data from " << pMesh.name.c_str() << " couldn't be loaded\n" << endl;
 		}
 
+		// Create the vertex array for the current mesh
 		CreateVertexDataBone(pMesh, pFbxRootNode);
 
 	}
 
 	else {
 
+		// Set the vertex layout flag
 		pMesh.vertexLayout = 0;
 
 		cout << "[NO DEFORMER] No hierarchy was attached to " << pMesh.name.c_str() << "\n\nVERTEX LAYOUT: DEFAULT\n" << endl;
 
+		// Process the control points
 		ProcessControlPoints(pMesh);
 
 		// Create vertex array for the current mesh
@@ -276,10 +286,11 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 
 void FBXConverter::LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh) {
 
-	ofstream logFile;
-	logFile.open("log.txt", ios::out | ios::app);
-
-	// Hierarchy depth variable is used for debugging purposes to track the depth of our tree
+	// Open and clear the log file for the current skeleton hierarchy to be loaded to validate parent index
+	logFileName = pMesh.name + "_log.txt";
+	
+	logFile.open(logFileName, ios::out);
+	logFile.close();
 
 	for (int subNodeIndex = 0; subNodeIndex < rootNode->GetChildCount(); subNodeIndex++) // loops trough all joints in node
 	{
@@ -295,14 +306,15 @@ void FBXConverter::LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh) {
 
 void FBXConverter::RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int depth, int index, int parentIndex) {
 
-	ofstream logFile;
-	logFile.open("log.txt", ios::out | ios::app);
+	logFile.open(logFileName, ios::out | ios::app);
 
-	// Recurvise depth first search function will first control that the actual node is a valid skeleton node
+	// Recurvise depth first search function will first control that the actual node is a valid skeleton node by checking if
+	// the node isn't a null pointer, which would result in the node attribute and its type being null and result in a thrown exception
 
 	if (node->GetNodeAttribute() && node->GetNodeAttribute()->GetAttributeType() && node->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton) {
 
 		// A "joint" object is created for every valid skeleton node in which its parent index and name is stored
+		// The current joint name and the parent joint index is pushed back to the current mesh's skeleton
 
 		Joint currentJoint;
 		currentJoint.ParentIndex = parentIndex;
@@ -328,10 +340,13 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 	HRESULT hr;
 	string currentFilePath;
 
-	// Can support up to five animations 
+	// Gather the number of defined animations in the available animation paths
 	for (int i = 0; i < animationCount; i++) {
 
+			// Get the current animation path
 			currentFilePath = animPaths[i];
+
+			// Load the animation file
 			hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
 
 			if (FAILED(hr)) {
@@ -340,15 +355,20 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 				return false;
 			}
 
+			// Retrieve the root node from the current file being opened
 			pFbxRootNode = pScene->GetRootNode();
 
+			// Gather animation data from the file, such as keyframe data
 			GatherAnimationData(pMesh, pFbxRootNode, pScene, i);
 
 	}
 
+	// When all animations have been loaded, we want to return to the main file and retrieve its root node again
+
 	currentFilePath = mainFileName;
 	hr = LoadSceneFile(currentFilePath, gFbxSdkManager, pImporter, pScene);
 
+	// If the switching failed for some reason, return false
 	if (FAILED(hr)) {
 
 		cout << "Couldn't switch back to main file " << currentFilePath << endl;
@@ -363,7 +383,7 @@ bool FBXConverter::LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager
 void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 
 	FbxSkin* currentSkin;
-	FbxMesh* mesh = GetMeshFromRoot(node, pMesh.name);
+	FbxMesh* mesh = GetMeshFromRoot(node, pMesh.name);	// Get the mesh from the root node, since the original mesh node pointer is lost when switching files
 	unsigned int deformerCount = mesh->GetDeformerCount();	// A deformer is associated with manipulating geometry through clusters, which are the joints we're after
 
 	FbxAMatrix geometryTransform = GetGeometryTransformation(node); // Geometric offset must be taken into account, even though it's often an identity matrix
@@ -385,7 +405,7 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 	// Get the number of joints in the hierarchy
 	int NUM_BONES = currentSkin->GetClusterCount();
 
-	// Get the root joint root
+	// Get the root joint node which is the first cluster in the skin
 	FbxCluster* currentCluster = currentSkin->GetCluster(0);
 
 	// Initialize the root joint
@@ -462,9 +482,9 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 
 			// Now we can start loading the animation data
 
-			// Alternatively, we can define a ClassId condition and use it in the GetSrcObject function. I found it handy, so I kept this as a comment
-			FbxCriteria animLayerCondition = FbxCriteria::ObjectTypeStrict(FbxAnimLayer::ClassId);
+			// Alternatively, we can define a ClassId condition and use it in the GetSrcObject function. We found it handy, so we kept this as a comment
 			//FbxAnimStack* currentAnimStack = FbxCast<FbxAnimStack>(scene->GetSrcObject(condition, 0));
+			FbxCriteria animLayerCondition = FbxCriteria::ObjectTypeStrict(FbxAnimLayer::ClassId);
 
 			FbxAnimStack* currentAnimStack = scene->GetSrcObject<FbxAnimStack>(0);	// Retrieve the animation stack which holds the animation layers
 			FbxString animStackName = currentAnimStack->GetName();	// Retrieve the name of the animation stack
@@ -475,8 +495,10 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 			FbxTime startTime = takeInformation->mLocalTimeSpan.GetStart();	// Retrieve start time for the animation (either 0 or the user-specified beginning in the time-line)
 			FbxTime endTime = takeInformation->mLocalTimeSpan.GetStop();	// Retrieve end time for the animation (often user specified or default )
 
-			FbxLongLong animationLength = pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Length = endTime.GetFrameCount(FbxTime::eFrames24) - startTime.GetFrameCount(FbxTime::eFrames24) + 1;	// To receive the total animation length, just subtract the start time frame with end time frame
+			// To receive the total animation length, just subtract the start time frame with end time frame
+			FbxLongLong animationLength = pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Length = endTime.GetFrameCount(FbxTime::eFrames24) - startTime.GetFrameCount(FbxTime::eFrames24) + 1;
 
+			// Resize the current joint's capacity for keyframes
 			pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence.resize(animationLength);
 
 			for (FbxLongLong i = startTime.GetFrameCount(FbxTime::eFrames24); i <= animationLength - 1; i++) {
@@ -486,8 +508,11 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].TimePos = currentTime.GetFrameCount(FbxTime::eFrames24);
 
 				//FbxAMatrix currentTransformOffset = node->EvaluateLocalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
+
+				// Store the keyframe matrix 
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform(currentTime);
 
+				// Break down the matrix into its translation, rotation and scale vectors
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Translation = XMFLOAT4(
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetT().mData[0],
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetT().mData[1],
@@ -506,6 +531,7 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[2],
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[3]);
 
+				// Convert to DirectX left handed coordinate system from Maya's right handed coordinate system 
 				ConvertToLeftHanded(pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform);
 
 			}
@@ -849,7 +875,7 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 	FbxSurfaceMaterial* surfaceMaterial;
 	FbxNode* materialNode;
-		
+	
 	materialNode = currentMesh->GetNode();
 	int materialCount = materialNode->GetMaterialCount();
 
@@ -861,6 +887,7 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 		// Set the material name for the current mesh's material
 		pMesh.objectMaterial.materialName = surfaceMaterial->GetName();
 
+		// Check if the material is of the type Lambert
 		if (surfaceMaterial->GetClassId() == FbxSurfaceLambert::ClassId) {
 
 			pMesh.objectMaterial.materialType = "Lambert";
@@ -884,6 +911,8 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 			pMesh.objectMaterial.ambientFactor = lambertMaterial->AmbientFactor;
 
+
+			// Lambert doesn't have any specularity to it, so this can be set to 0
 			pMesh.objectMaterial.specularColor.x = 0.0f;
 			pMesh.objectMaterial.specularColor.y = 0.0f;
 			pMesh.objectMaterial.specularColor.z = 0.0f;
@@ -891,6 +920,7 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 			pMesh.objectMaterial.specularFactor = 0.0f;
 		}
 
+		// Check if the material is of the type Phong
 		else if (surfaceMaterial->GetClassId() == FbxSurfacePhong::ClassId) {
 ;
 			pMesh.objectMaterial.materialType = "Phong";
@@ -944,9 +974,9 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 			}
 		}
 
-		else{
+		else {
 
-		// Look if any textures are attached (currently just on the diffuse channel) 
+		// Look if any textures are attached (currently only on the diffuse channel) 
 		int textureCount = materialProperty.GetSrcObjectCount<FbxTexture>();
 
 		if(textureCount > 0){
@@ -966,6 +996,7 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 		}
 
+		// If no textures were found, set the hasTexture flag to false
 		else {
 
 			pMesh.objectMaterial.hasTexture = false;
@@ -980,13 +1011,18 @@ void FBXConverter::LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh) {
 
 bool FBXConverter::ExportTexture(Material &objectMaterial, string exportPath) {
 
+		// Components to build the texture path to gather the texture from
 		string texturePath = objectMaterial.diffuseTexture.texturePath;
 		string textureName = objectMaterial.diffuseTexture.textureName;
 		string extension = "." + texturePath.substr(texturePath.find(".") + 1);
 
+		// Path to where the texture should be exported
 		string exportFolder = exportPath + "/Textures/";
 
+		// Create the texture directory in the exported format folder
 		create_directory(exportFolder);
+
+		// Filesystem can copy the texture file for us, given a texture path and settings ( currently set to overwrite )
 		if (!copy_file(texturePath, exportFolder + textureName + extension, std::experimental::filesystem::copy_options::overwrite_existing)) {
 
 			cout << "Invalid texture path" << exportPath.c_str() << "doesn't exist!";
@@ -1189,7 +1225,7 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 void FBXConverter::writeToFile(string pathName, string fileName)
 {
 	//------------------------------------------------------//
-	// HEADER
+	// HEADER ( STATIC )
 	//------------------------------------------------------//
 
 	string binaryFile = pathName + "/" + fileName + "_Binary.txt";
@@ -1201,39 +1237,41 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 	outASCII << "--------------------------------------------------HEADER--------------------------------------------------" << endl;
 
+	// The file header holds the count of each component. It's a total of 12 bytes.
 	vector<uint32_t>headerContent;
 	uint32_t nrOfMeshes, nrOfCameras, nrOfLights;
 	uint32_t byteOffset = 0;
 	uint32_t byteCounter = 0;
 
-	// uint32_t are 4 bytes each
-	nrOfMeshes = meshes.size(); // 4
-	nrOfCameras = cameras.size(); // 8
-	nrOfLights = lights.size(); // 12
+	nrOfMeshes = meshes.size(); 
+	nrOfCameras = cameras.size(); 
+	nrOfLights = lights.size();
 
+	// Push back the number of each component to the header content vector
 	headerContent.push_back(nrOfMeshes);
 	headerContent.push_back(nrOfCameras);
 	headerContent.push_back(nrOfLights);
 
-	// First 16 bytes holds the main header content
+	// First 12 bytes holds the main header content
 	byteOffset = sizeof(nrOfMeshes) + sizeof(nrOfCameras) + sizeof(nrOfLights);
 	byteCounter += byteOffset;
 
-	// First 8 are the number of meshes represented in a number
+	// First 4 are the number of meshes represented in a number
 	outASCII << "Meshes: " << nrOfMeshes << endl;
 
-	// First 12 are the number of cameras represented in a number
+	// First 8 are the number of cameras represented in a number
 	outASCII << "Cameras: " << nrOfCameras << endl;
 
-	// First 16 are the number of lights represented in a number
+	// First 12 are the number of lights represented in a number
 	outASCII << "Lights: " << nrOfLights << endl;
 
+	// Write the main header content to the binary file
 	outBinary.write(reinterpret_cast<char*>(headerContent.data()), sizeof(headerContent[0]) * headerContent.size());
 
 	outASCII << "----------------------------------------MESH SUB HEADER----------------------------------------" << endl;
 
 	//------------------------------------------------------//
-	// MESH SUB HEADER
+	// MESH SUB HEADER ( SEMI-DYNAMIC )
 	//------------------------------------------------------//
 
 	vector<uint32_t>meshSubHeaderContent;
@@ -1245,8 +1283,12 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 	uint32_t hasTexture;
 
 	// For every mesh, we must write a sub header since this section of the file is semi-dynamic
+	// This holds the number of vertices, size of skeleton hierarchy, animations and flags for texture and vertex layout
 	for (UINT i = 0; i < nrOfMeshes; i++) {
 
+		// Check the vertex layout. 
+		// 1 = Deformer is attached to the current mesh
+		// 0 = No deformer attached to the current mesh
 		vertexLayout = this->meshes[i].vertexLayout;
 
 		if (this->meshes[i].vertexLayout == 1) {
@@ -1293,8 +1335,10 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 	}
 
+	// Write the mesh sub header content to the binary file
 	outBinary.write(reinterpret_cast<char*>(meshSubHeaderContent.data()), sizeof(meshSubHeaderContent[0]) * meshSubHeaderContent.size());
 
+	// Print the mesh sub header content to the ASCII file
 	for (UINT i = 0; i < nrOfMeshes; i++) {
 
 		outASCII << "Vertex Layout: " << this->meshes[i].vertexLayout << endl; // Vertex type
@@ -1316,6 +1360,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 	}
 
+	// The next content to be written to the format is mesh data
 	for (int index = 0; index < meshes.size(); index++) {
 
 		outASCII << "--------------------------------------------------" << meshes[index].name.c_str() << " MESH" << "--------------------------------------------------" << endl;
@@ -1326,6 +1371,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 		byteCounter += byteOffset;
 		outASCII << "Byte offset: " << byteOffset << "\n\n";
 
+		// Header type defined for the translation, rotation and scale of the current mesh
 		vector<XMFLOAT3>meshTransformations;
 
 		XMFLOAT3 meshPosition; // 3 bytes
@@ -1347,15 +1393,17 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 		outASCII << "Scale: " << meshScale.x << ", " << meshScale.y << ", " << meshScale.z << endl;
 
+		// Write the mesh transformation to the binary file
 		outBinary.write(reinterpret_cast<char*>(meshTransformations.data()), sizeof(meshTransformations[0]) * meshTransformations.size());
 
-		// Vector that will be filled with material attributes
+		// Materia header defined for the material attributes of the current mesh
 		vector<XMFLOAT4>materialAttributes;
 
 		XMFLOAT4 ambient = { 0.0f, 0.0f, 0.0f, 1.0f };
 		XMFLOAT4 diffuse = { 0.0f, 0.0f, 0.0f, 1.0f };
 		XMFLOAT4 specular = { 0.0f, 0.0f, 0.0f, 1.0f };
 
+		// Check if the material of the mesh is Phong
 		if (this->meshes[index].objectMaterial.materialType == "Phong") {
 
 			ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
@@ -1380,6 +1428,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 		}
 
+		// Check if the material of the mesh is Lambert (Maya default)
 		else if (this->meshes[index].objectMaterial.materialType == "Lambert") {
 
 			ambient.x = this->meshes[index].objectMaterial.ambientColor.x;
@@ -1404,12 +1453,14 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 		}
 
+		// Write the material attributes to the binary file
 		outBinary.write(reinterpret_cast<char*>(materialAttributes.data()), sizeof(materialAttributes[0]) * materialAttributes.size());
 
 		//------------------------------------------------------//
 		// EXPORT TEXTURES
 		//------------------------------------------------------//
 
+		// Check if the current mesh has a texture attached to it
 		if (this->meshes[index].objectMaterial.hasTexture == true) {
 
 			// Export the texture to a texture folder
@@ -1425,6 +1476,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 			// Write texture name to binary and ASCII file
 			uint32_t size = textureName.size();
 
+			// Write the length of the texture string name and the texture name to the binary file
 			outBinary.write(reinterpret_cast<char*>(&size), sizeof(uint32_t));
 			outBinary.write(reinterpret_cast<char*>(&textureName[0]), size);
 
@@ -1435,6 +1487,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 		// GATHER VERTICES AND CHECK VERTEX LAYOUT
 		//------------------------------------------------------//
 
+		// If the vertex layout is 0, meaning no deformer is attached to the current mesh, we want to write all vertex data except bone indices and weight
 		if (meshes[index].vertexLayout == 0) {
 
 			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
@@ -1446,6 +1499,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 			uint32_t vertexCount = this->meshes[index].standardVertices.size();
 
+			// Vector of the type vertex to hold vertices for exporting
 			vector<Vertex> vertices;
 
 			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
@@ -1489,10 +1543,12 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 				vertices.push_back(vertexData);
 			}
 
+			// Write the vertices to the binary file
 			outBinary.write(reinterpret_cast<char*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
 
 		}
 
+		// Else if the vertex layout is 1, meaning a deformer is attached to the current mesh, we want to write all vertex data including bone indices and weights
 		else {
 
 			outASCII << "--------------------------------------------------" << "VERTICES" << "--------------------------------------------------" << endl;
@@ -1507,7 +1563,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 			uint32_t vertexCount = this->meshes[index].boneVertices.size();
 
-			// Vector of vertices to be filled for output
+			// Vector of the type VertexDeformer to hold vertices for exporting
 			vector<VertexDeformer> vertices;
 
 			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
@@ -1569,7 +1625,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 				vertices.push_back(vertexData);
 			}
 
-			// Write vertices to binary file
+			// Write the vertices to the binary file
 			outBinary.write(reinterpret_cast<char*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
 
 			//------------------------------------------------------//
@@ -1594,9 +1650,10 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 			XMFLOAT4 translateFloat;
 			XMFLOAT3 nullFloat = { 0, 0, 0 };
 
+			// Loop trough each joint in the hierarchy and export its bindpose matrix
 			for (int jointIndex = 0; jointIndex < this->meshes[index].skeleton.hierarchy.size(); jointIndex++) {
 
-				// Get the bindpose
+				// Get the bindpose and joint parent index
 				XMFLOAT4X4 bindPoseMatrix;
 				uint32_t parentIndex = this->meshes[index].skeleton.hierarchy[jointIndex].ParentIndex;
 				XMMATRIX inversedBindPoseXM = Load4X4JointTransformations(this->meshes[index].skeleton.hierarchy[jointIndex]); // converts from float4x4 too xmmatrix
@@ -1634,6 +1691,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 				outASCII << "Z: " << scaleFloat.z << "\n";
 				outASCII << "W: " << scaleFloat.w << "\n\n";
 
+				// Write the current bindpose and the joint parent index
 				outBinary.write(reinterpret_cast<char*>(&parentIndex), sizeof(uint32_t));
 				outBinary.write(reinterpret_cast<char*>(&bindPoseMatrix), sizeof(XMFLOAT4X4));
 
@@ -1645,9 +1703,11 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 			outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
 
+			// Vector to hold the total amount of keyframes for all animations
 			vector<XMFLOAT4X4> *animationTransformations;
 			animationTransformations = new vector<XMFLOAT4X4>[animationCount];
 
+			// Loop through each animation
 			for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
 			{
 
@@ -1666,10 +1726,12 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 				int hierarchySize = this->meshes[index].skeleton.hierarchy.size();
 
+				// Loop through each joint in hierarchy ( Every joint has the same number of transformations as the length of the current animation )
 				for (int currentJointIndex = 0; currentJointIndex < hierarchySize; currentJointIndex++) {
 
 					uint32_t animationLength = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence.size();
 
+					// Loop through each keyframe in the current joint being processed
 					for (int currentKeyFrameIndex = 0; currentKeyFrameIndex < animationLength; currentKeyFrameIndex++) {
 
 						FbxAMatrix keyframe = this->meshes[index].skeleton.hierarchy[currentJointIndex].Animations[currentAnimationIndex].Sequence[currentKeyFrameIndex].LocalTransform;
@@ -1681,6 +1743,7 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 				}
 
+				// Write the current animation length and the total amount of keyframes for the animation
 				outBinary.write(reinterpret_cast<char*>(&currentAnimLength), sizeof(uint32_t));
 				outBinary.write(reinterpret_cast<char*>(animationTransformations[currentAnimationIndex].data()), sizeof(animationTransformations[currentAnimationIndex][0]) * animationTransformations[currentAnimationIndex].size());
 
@@ -1763,25 +1826,30 @@ unsigned int FBXConverter::FindJointIndexByName(string& jointName, Skeleton skel
 
 	for (unsigned int i = 0; i < skeleton.hierarchy.size(); i++) {
 
-		if (skeleton.hierarchy[i].Name == jointName) {	// It's possible to compare a constant character with a string, which is the case here
+		if (skeleton.hierarchy[i].Name == jointName) {
 
 			return i;
 		}
 	}
 
-	// If Skeleton information can't be read, inform the user of the problem
+	// If Skeleton information can't be read, inform the user of the problem. This is often due to differing names among the joints in the hierarchy.
+	// Therefore, naming convention in Maya is very important. 
 
 	throw std::exception("Skeleton information in FBX file cannot be received and might be corrupt");
 }
 
 void FBXConverter::ConvertToLeftHanded(FbxAMatrix &matrix) {
 
+	// Get the translation and rotation from the matrix to be processed
 	FbxVector4 translation = matrix.GetT();
 	FbxVector4 rotation = matrix.GetR();
+
+	// To convert to DirectX left handed coordinate system, we negate the z-translation and xy rotation in the matrix
 
 	translation.Set(translation.mData[0], translation.mData[1], -translation.mData[2]);
 	rotation.Set(-rotation.mData[0], -rotation.mData[1], rotation.mData[2]);
 
+	// Update the matrix with the converted translation and rotation
 	matrix.SetT(translation);
 	matrix.SetR(rotation);
 }
@@ -1822,6 +1890,8 @@ FbxMesh* FBXConverter::GetMeshFromRoot(FbxNode* node, string meshName) {	// Func
 
 HRESULT FBXConverter::LoadSceneFile(string fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene) {
 
+	// Gather the new FBX file importer
+
 	bool bSuccess = pImporter->Initialize(fileName.c_str(), -1, gFbxSdkManager->GetIOSettings());
 
 	if (!bSuccess) {
@@ -1831,6 +1901,8 @@ HRESULT FBXConverter::LoadSceneFile(string fileName, FbxManager* gFbxSdkManager,
 	}
 
 	cout << "[OK] Importer could successfully read the file " << fileName << endl;
+
+	// Use the new importer to import its content into the scene
 
 	bSuccess = pImporter->Import(pScene);
 
