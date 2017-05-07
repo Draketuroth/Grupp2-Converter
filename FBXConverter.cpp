@@ -55,6 +55,14 @@ bool FBXConverter::LoadFBXFormat(string mainFileName) {
 	FbxNode* pFbxRootNode = nullptr;
 
 	//------------------------------------------------------------------------------//
+	// CLEAR LOG FILE
+	//------------------------------------------------------------------------------//
+
+	ofstream logFile;
+	logFile.open("log.txt", ios::out);
+	logFile.close();
+
+	//------------------------------------------------------------------------------//
 	// INITIALIZE FBX SDK MANAGER
 	//------------------------------------------------------------------------------//
 
@@ -286,11 +294,8 @@ void FBXConverter::CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager*
 
 void FBXConverter::LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh) {
 
-	// Open and clear the log file for the current skeleton hierarchy to be loaded to validate parent index
-	logFileName = pMesh.name + "_log.txt";
-	
-	logFile.open(logFileName, ios::out);
-	logFile.close();
+	ofstream logFile;
+	logFile.open("log.txt", ios::out | ios::app);
 
 	for (int subNodeIndex = 0; subNodeIndex < rootNode->GetChildCount(); subNodeIndex++) // loops trough all joints in node
 	{
@@ -306,7 +311,8 @@ void FBXConverter::LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh) {
 
 void FBXConverter::RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int depth, int index, int parentIndex) {
 
-	logFile.open(logFileName, ios::out | ios::app);
+	ofstream logFile;
+	logFile.open("log.txt", ios::out | ios::app);
 
 	// Recurvise depth first search function will first control that the actual node is a valid skeleton node by checking if
 	// the node isn't a null pointer, which would result in the node attribute and its type being null and result in a thrown exception
