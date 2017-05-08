@@ -22,6 +22,8 @@ using namespace std;
 using namespace DirectX;
 using namespace std::experimental::filesystem;
 
+#define ANIM_GLOBAL false
+
 class FBXConverter {
 
 public:
