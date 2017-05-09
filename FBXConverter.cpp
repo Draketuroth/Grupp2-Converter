@@ -419,6 +419,9 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 	pMesh.skeleton.hierarchy[0].GlobalTransform = pMesh.skeleton.hierarchy[0].LocalTransform;
 	pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse().Transpose();
 
+	DirectX::XMFLOAT4X4 abc;
+	abc = Load4X4Transformations(pMesh.skeleton.hierarchy[0].GlobalBindposeInverse);
+
 	for (int i = 1; i < NUM_BONES; i++) {
 		
 		// Receive the current cluster
@@ -440,6 +443,8 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 		ConvertToLeftHanded(b.GlobalBindposeInverse);
 
 	}
+
+	//pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse();
 
 }
 
