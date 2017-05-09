@@ -81,13 +81,13 @@ int main() {
 	// The format is set to allow a largo number of animations for each skinned mesh. The names are pushed back to a string vector
 	File[0].animations.push_back("_Run.fbx");
 	File[0].animations.push_back("_Idle.fbx");
-	File[0].animations.push_back("_Death.fbx");
+	/*File[0].animations.push_back("_Death.fbx");
 	File[0].animations.push_back("_MeleeAttack.fbx");
-	File[0].animations.push_back("_RangeAttack.fbx");
+	File[0].animations.push_back("_RangeAttack.fbx");*/
 
 	// 2.
 	// Set the prefix for the FBX file to be loaded and set the animation paths
-	prefix = "FbxModel\\MainCharacter\\MainCharacter";
+	prefix = "FbxModel\\Champion\\Champion";
 	File[0].setAnimation(prefix);
 
 	// 3.
