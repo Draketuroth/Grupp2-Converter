@@ -437,12 +437,7 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 		// The inverse bind pose is calculated by taking the inverse of the joint GLOBAL transformation matrix
 		b.GlobalBindposeInverse = b.GlobalTransform.Inverse();
 
-		// Convert to DirectX left handed coordinate system from Maya's right handed coordinate system 
-		//ConvertToLeftHanded(b.GlobalBindposeInverse);
-
 	}
-
-	//pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse();
 
 }
 
@@ -538,9 +533,6 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[1],
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[2],
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[3]);
-
-				// Convert to DirectX left handed coordinate system from Maya's right handed coordinate system 
-				//ConvertToLeftHanded(pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform);
 
 			}
 
