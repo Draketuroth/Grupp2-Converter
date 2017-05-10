@@ -513,10 +513,10 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 			// Resize the current joint's capacity for keyframes
 			pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence.resize(animationLength);
 
-			for (FbxLongLong i = startTime.GetFrameCount(FbxTime::eFrames24); i <= animationLength - 1; i++) {
+			for (FbxLongLong i = 0; i < animationLength; i++) {
 
 				FbxTime currentTime;
-				currentTime.SetFrame(i, FbxTime::eFrames24);
+				currentTime.SetFrame(i + 1, FbxTime::eFrames24);
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].TimePos = currentTime.GetFrameCount(FbxTime::eFrames24);
 
 				FbxAMatrix identity;
