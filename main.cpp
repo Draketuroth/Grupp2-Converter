@@ -87,7 +87,7 @@ int main() {
 
 	// 2.
 	// Set the prefix for the FBX file to be loaded and set the animation paths
-	prefix = "FbxModel\\MainCharacter\\MainCharacter";
+	prefix = "FbxModel\\Champion\\Champion";
 	File[0].setAnimation(prefix);
 
 	// 3.

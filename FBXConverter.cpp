@@ -419,9 +419,6 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 	pMesh.skeleton.hierarchy[0].GlobalTransform = pMesh.skeleton.hierarchy[0].LocalTransform;
 	pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse();
 
-	DirectX::XMFLOAT4X4 abc;
-	abc = Load4X4Transformations(pMesh.skeleton.hierarchy[0].GlobalBindposeInverse);
-
 	// Loop through all the joints in the hierarchy
 	for (int i = 1; i < NUM_BONES; i++) {
 		
@@ -441,7 +438,7 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 		b.GlobalBindposeInverse = b.GlobalTransform.Inverse();
 
 		// Convert to DirectX left handed coordinate system from Maya's right handed coordinate system 
-		ConvertToLeftHanded(b.GlobalBindposeInverse);
+		//ConvertToLeftHanded(b.GlobalBindposeInverse);
 
 	}
 
@@ -518,12 +515,9 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 				FbxTime currentTime;
 				currentTime.SetFrame(i + 1, FbxTime::eFrames24);
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].TimePos = currentTime.GetFrameCount(FbxTime::eFrames24);
-
-				FbxAMatrix identity;
-				identity.SetIdentity();
 				
-				FbxAMatrix currentTransformOffset = node->EvaluateLocalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
-				FbxAMatrix localTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateLocalTransform(currentTime);
+				FbxAMatrix currentTransformOffset = node->EvaluateGlobalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
+				FbxAMatrix localTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateGlobalTransform(currentTime);
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform = localTransform;
 
 				// Break down the matrix into its translation, rotation and scale vectors
@@ -546,7 +540,7 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 					pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform.GetQ().mData[3]);
 
 				// Convert to DirectX left handed coordinate system from Maya's right handed coordinate system 
-				ConvertToLeftHanded(pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform);
+				//ConvertToLeftHanded(pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform);
 
 			}
 
