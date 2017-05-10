@@ -411,23 +411,24 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 	// Get the number of joints in the hierarchy
 	int NUM_BONES = currentSkin->GetClusterCount();
 
-	// Get the root joint node which is the first cluster in the skin
+	// Get the root joint node which is the first cluster in the skin. 
 	FbxCluster* currentCluster = currentSkin->GetCluster(0);
 
-	// Initialize the root joint
+	// Initialize the root joint first. By doing so, we make sure no children is evaluated before its parent
 	pMesh.skeleton.hierarchy[0].LocalTransform = currentCluster->GetLink()->EvaluateLocalTransform(FBXSDK_TIME_INFINITE);
 	pMesh.skeleton.hierarchy[0].GlobalTransform = pMesh.skeleton.hierarchy[0].LocalTransform;
-	pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse().Transpose();
+	pMesh.skeleton.hierarchy[0].GlobalBindposeInverse = pMesh.skeleton.hierarchy[0].GlobalTransform.Inverse();
 
 	DirectX::XMFLOAT4X4 abc;
 	abc = Load4X4Transformations(pMesh.skeleton.hierarchy[0].GlobalBindposeInverse);
 
+	// Loop through all the joints in the hierarchy
 	for (int i = 1; i < NUM_BONES; i++) {
 		
-		// Receive the current cluster
+		// Receive the current joint cluster
 		currentCluster = currentSkin->GetCluster(i);
 
-		// Create a reference to the currenct joint to be processed
+		// Create a reference to the currenct joint in the hierarchy to be processed
 		Joint &b = pMesh.skeleton.hierarchy[i];
 
 		// Get the current joint LOCAL transformation
@@ -437,7 +438,7 @@ void FBXConverter::CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene) {
 		b.GlobalTransform = pMesh.skeleton.hierarchy[b.ParentIndex].GlobalTransform * b.LocalTransform;
 
 		// The inverse bind pose is calculated by taking the inverse of the joint GLOBAL transformation matrix
-		b.GlobalBindposeInverse = b.GlobalTransform.Inverse().Transpose();
+		b.GlobalBindposeInverse = b.GlobalTransform.Inverse();
 
 		// Convert to DirectX left handed coordinate system from Maya's right handed coordinate system 
 		ConvertToLeftHanded(b.GlobalBindposeInverse);
@@ -520,10 +521,10 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 
 				FbxAMatrix identity;
 				identity.SetIdentity();
-
-				FbxAMatrix currentTransformOffset = node->EvaluateLocalTransform(currentTime) * identity;	// Receives global transformation at time t
+				
+				FbxAMatrix currentTransformOffset = node->EvaluateLocalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
 				FbxAMatrix localTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateLocalTransform(currentTime);
-				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform = localTransform.Transpose();
+				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].LocalTransform = localTransform;
 
 				// Break down the matrix into its translation, rotation and scale vectors
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].Translation = XMFLOAT4(
@@ -1230,7 +1231,7 @@ void FBXConverter::LoadCameras(FbxNode* pFbxRootNode) {
 
 	else {
 
-		cout << "[NO CONTENT FOUND] No cameras were found in the scene";
+		cout << "[NO CONTENT FOUND] No cameras were found in the scene\n";
 	}
 
 }
