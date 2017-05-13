@@ -30,6 +30,7 @@ public:
 	~FBXConverter();
 
 	void ReleaseAll(FbxManager* gFbxSdkManager);
+	void Deallocate();
 
 	bool Load(string fileName);
 
@@ -80,7 +81,7 @@ public:
 
 	int animationCount;
 	vector<string>animations;
-	string* animPaths;
+	vector<string>animPaths;
 
 private:
 

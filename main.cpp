@@ -50,7 +50,7 @@ using namespace std::experimental::filesystem;
 // 3. Material Attributes and Texture on the diffuse channel (1 texture per object)
 // 4: Lights
 // 5. Cameras
-FBXConverter File[4];
+FBXConverter File[5];
 
 int main() {
 
@@ -138,7 +138,30 @@ int main() {
 	File[3].Load(loadPath.c_str());
 	File[3].writeToFile(folderName, "Platform");
 
+	//------------------------------------------------------//
+	// LOAD LAVA ENEMY
+	//------------------------------------------------------//
+
+	// Set the order of the animations to be loaded
+	File[4].animations.push_back("_Run.fbx");
+	File[4].animations.push_back("_Idle.fbx");
+	File[4].animations.push_back("_Death.fbx");
+	File[4].animations.push_back("_RangeAttack.fbx");
+	prefix = "FbxModel\\LavaEnemy\\LavaEnemy";
+	File[4].setAnimation(prefix);
+
+	loadPath = prefix + "_BindPose.fbx";
+	File[4].Load(loadPath.c_str());
+
+	// Write the content from the selected files
+	File[4].writeToFile(folderName, "lavaEnemy");
+
 	getchar();
+	
+	for (UINT i = 0; i < 5; i++) {
+
+		File[i].Deallocate();
+	}
 	
 	return 0;
 }

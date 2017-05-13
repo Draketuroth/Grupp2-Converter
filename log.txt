@@ -1,0 +1,17 @@
+4 LHand   3
+3 LArm   2
+2 LSoulder   1
+7 RHand   6
+6 RArm   5
+5 RShoulder   1
+9 Head   8
+8 Neck   1
+1 Chest   0
+12 LFoot   11
+11 LKnee   10
+10 LLeg   0
+15 RFoot   14
+14 RKnee   13
+13 RLeg   0
+0 Hip   -1
+

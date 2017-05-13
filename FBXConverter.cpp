@@ -27,6 +27,19 @@ void FBXConverter::ReleaseAll(FbxManager* gFbxSdkManager) {
 	}*/
 }
 
+void FBXConverter::Deallocate() {
+
+	for (UINT i = 0; i < meshes.size(); i++) {
+
+		for (UINT j = 0; j < meshes[i].controlPoints.size(); j++) {
+
+		delete meshes[i].controlPoints[j];
+
+		}
+	}
+
+}
+
 bool FBXConverter::Load(string fileName) {
 
 	// Check if the FBX file was loaded properly
@@ -1703,9 +1716,8 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 			outASCII << "--------------------------------------------------" << "ANIMATIONS" << "--------------------------------------------------" << endl;
 
-			// Vector to hold the total amount of keyframes for all animations
-			vector<XMFLOAT4X4> *animationTransformations;
-			animationTransformations = new vector<XMFLOAT4X4>[animationCount];
+			// Vector to hold the total amount of keyframes for all animations. Format supports up to five animations.
+			vector<XMFLOAT4X4> animationTransformations[5];
 
 			// Loop through each animation
 			for (int currentAnimationIndex = 0; currentAnimationIndex < animationCount; currentAnimationIndex++)
@@ -1922,11 +1934,11 @@ void FBXConverter::setAnimation(string prefix) {
 	animationCount = animations.size();
 
 	// Create the required amount of animation paths
-	animPaths = new string[animationCount];
 
 	for(UINT i = 0; i < animationCount; i++){
 
-	animPaths[i] = prefix + animations[i];
+		string path = prefix + animations[i];
+		animPaths.push_back(path);
 
 	}
 }
