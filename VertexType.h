@@ -1,8 +1,8 @@
 #ifndef VERTEXTYPE_H
 #define VERTEXTYPE_H
 
-#include <d3d11.h>	// We require the d3d11 header for Direct3D functions
-#include <d3dcompiler.h>	// We also need the D3DCompiler header to compile shaders
+#include <d3d11.h>
+#include <d3dcompiler.h>
 #include <iostream>
 #include <DirectXMath.h>
 
@@ -38,8 +38,8 @@ struct Vertex_Bone { // Stores the attributes of a vertex such as position, uv c
 // EXPORTER VERTEX TYPES
 //----------------------------------------------------------------------------------------------------------------------------------//
 
-struct Vertex
-{
+struct Vertex{ // Struct for an ordinary vertex layout without deformer data
+
 	float pos[3];
 	float uv[2];
 	float normal[3];
@@ -48,7 +48,7 @@ struct Vertex
 
 };
 
-struct VertexDeformer {
+struct VertexDeformer { // Struct for a vertex layout with deformer data that holds the four influences (Weight pairs)
 
 	float pos[3];
 	float uv[2];
@@ -57,6 +57,13 @@ struct VertexDeformer {
 	float tangent[3];
 	float weights[4];
 	uint32_t boneIndices[4];
+};
+
+struct ExportLights
+{
+	string name;
+	XMFLOAT3 Pos;
+	XMFLOAT3 Color;
 };
 
 #endif

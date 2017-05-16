@@ -16,10 +16,11 @@
 
 #include "VertexType.h"
 
+#include <filesystem>
+
 using namespace std;
 using namespace DirectX;
-
-#define ANIMATIONCOUNT 2
+using namespace std::experimental::filesystem;
 
 class FBXConverter {
 
@@ -29,19 +30,21 @@ public:
 	~FBXConverter();
 
 	void ReleaseAll(FbxManager* gFbxSdkManager);
+	void Deallocate();
 
-	bool Load(const char *fileName);
+	bool Load(string fileName);
 
-	bool LoadFBXFormat(const char *mainFileName);
+	bool LoadFBXFormat(string mainFileName);
 
-	void LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+	void LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName);
 	void ProcessControlPoints(Mesh &pMesh);
 	
-	void CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+	void CheckSkeleton(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName);
 	void LoadSkeletonHierarchy(FbxNode* rootNode, Mesh &pMesh);
 	void RecursiveDepthFirstSearch(FbxNode* node, Mesh &pMesh, int depth, int index, int parentIndex);
-	bool LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+	bool LoadAnimations(Mesh &pMesh, FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene, string mainFileName);
 
+	void CreateBindPose(Mesh &pMesh, FbxNode* node, FbxScene* scene);
 	void GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* scene, int animIndex);
 
 	void LoadLights(FbxNode* pFbxRootNode);
@@ -51,8 +54,10 @@ public:
 	void CreateVertexDataBone(Mesh &pMesh, FbxNode* pFbxRootNode);
 
 	void LoadMaterial(FbxMesh* currentMesh, Mesh& pMesh);
+
+	bool ExportTexture(Material &objectMaterial, string exportPath);
 	
-	void writeToFile(const char* pathASCII, const char* pathBinary);
+	void writeToFile(string pathName, string fileName);
 
 	//----------------------------------------------------------------------------------------------------------------------------------//
 	// SECONDARY FUNCTIONS
@@ -68,10 +73,15 @@ public:
 	// OPEN FILE FUNCTIONS
 	//----------------------------------------------------------------------------------------------------------------------------------//
 
-	HRESULT LoadSceneFile(const char* fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+	HRESULT LoadSceneFile(string fileName, FbxManager* gFbxSdkManager, FbxImporter* pImporter, FbxScene* pScene);
+	void setAnimation(string prefix);
 
 	XMMATRIX FBXConverter::Load4X4JointTransformations(Joint joint);
 	XMFLOAT4X4 FBXConverter::Load4X4Transformations(FbxAMatrix fbxMatrix);
+
+	int animationCount;
+	vector<string>animations;
+	vector<string>animPaths;
 
 private:
 
