@@ -50,7 +50,7 @@ using namespace std::experimental::filesystem;
 // 3. Material Attributes and Texture on the diffuse channel (1 texture per object)
 // 4: Lights
 // 5. Cameras
-FBXConverter File[5];
+FBXConverter File[6];
 
 int main() {
 
@@ -157,9 +157,20 @@ int main() {
 	// Write the content from the selected files
 	File[4].writeToFile(folderName, "lavaEnemy");
 
+	//------------------------------------------------------//
+	// LOAD PROJECTILE
+	//------------------------------------------------------//
+	prefix = "FbxModel\\Projectile\\";
+	loadPath = prefix + "Projectile.fbx";
+
+	// When we're working with static meshes, there is no need to define any animation paths
+	File[5].Load(loadPath.c_str());
+	File[5].writeToFile(folderName, "Projectile");
+
+	cout << "\n\nAll files have been loaded! Press Enter to quit..." << endl;
 	getchar();
 	
-	for (UINT i = 0; i < 5; i++) {
+	for (UINT i = 0; i < 6; i++) {
 
 		File[i].Deallocate();
 	}
