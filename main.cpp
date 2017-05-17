@@ -64,7 +64,8 @@ int main() {
 	// It's important to make sure we're exporting to the same folder where the small game project solution is located
 
 	//path pathName = current_path();	
-	path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
+	//path pathName = "C:\\Users\\Fredrik\\Source\\Repos\\Lilla-Spelprojektet-Grupp-2";
+	path pathName = "D:\\3D prog\\Lilla spel"; 
 	//path pathName = "E:\\Litet Spel\\Project\\Lilla-Spelprojektet-Grupp-2";
 
 	// Create a folder for all the format files to easily manage them in other project folders

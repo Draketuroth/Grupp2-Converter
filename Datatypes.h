@@ -128,6 +128,16 @@ struct Skeleton { // Stores every joint in a skeleton hierarchy from the loaded 
 
 };
 
+struct BBox {
+
+	float xMax;
+	float yMax;
+	float zMax;
+	float xMin;
+	float yMin;
+	float zMin;
+};
+
 struct Mesh { // Extended node type to hold both the FBX mesh node and its vertices
 
 	FbxMesh* meshNode;
@@ -142,6 +152,7 @@ struct Mesh { // Extended node type to hold both the FBX mesh node and its verti
 	vector<int>indices;
 	Material objectMaterial;
 	XMFLOAT3 meshScale;
+	BBox bboxValues; 
 
 };
 
@@ -160,6 +171,8 @@ struct Camera {
 	XMFLOAT3 position;
 	XMFLOAT3 rotation;
 };
+
+
 
 #endif DATATYPES_H
 

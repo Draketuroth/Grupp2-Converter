@@ -183,6 +183,23 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 		// Load the materials of the current mesh
 		LoadMaterial(currentMesh.meshNode, currentMesh);
 
+		// Compute bounding box values
+		currentMesh.meshNode->ComputeBBox();
+
+		// bbox values
+		FbxDouble3 bboxMax = currentMesh.meshNode->BBoxMax; 
+		FbxDouble3 bboxMin = currentMesh.meshNode->BBoxMin;
+		
+		double test = (float)bboxMax[0];
+		//alla max values först
+		currentMesh.bboxValues.xMax = (float)bboxMax[0]; 
+		currentMesh.bboxValues.yMax = (float)bboxMax[1];
+		currentMesh.bboxValues.zMax = (float)bboxMax[2];
+
+		currentMesh.bboxValues.xMin = (float)bboxMin[0];
+		currentMesh.bboxValues.yMin = (float)bboxMin[1];
+		currentMesh.bboxValues.zMin = (float)bboxMin[2];
+		
 		meshes.push_back(currentMesh);
 		
 	}
@@ -1386,28 +1403,50 @@ void FBXConverter::writeToFile(string pathName, string fileName)
 
 		// Header type defined for the translation, rotation and scale of the current mesh
 		vector<XMFLOAT3>meshTransformations;
+		//vector<float>boundingBox;
 
 		XMFLOAT3 meshPosition; // 3 bytes
 		XMFLOAT3 meshRotation; // 3 + 3 bytes
-		XMFLOAT3 meshScale; // 3 + 3 + 3 bytes
+		XMFLOAT3 meshScale; // 3 + 3 + 3 byte
+		BBox meshBoundingBox;
 
+
+		// Get mesh position
 		meshPosition = this->meshes[index].position;
 		meshTransformations.push_back(meshPosition);
 
 		outASCII << "Position: " << meshPosition.x << ", " << meshPosition.y << ", " << meshPosition.z << endl;
 
+		// Get mesh rotatiom
 		meshRotation = this->meshes[index].rotation;
 		meshTransformations.push_back(meshRotation);
 
 		outASCII << "Rotation: " << meshRotation.x << ", " << meshRotation.y << ", " << meshRotation.z << endl;
 
+		// Get mesh scale
 		meshScale = this->meshes[index].meshScale;
 		meshTransformations.push_back(meshScale);
 
 		outASCII << "Scale: " << meshScale.x << ", " << meshScale.y << ", " << meshScale.z << endl;
 
+		// Get mesh bounding box max values
+		meshBoundingBox.xMax = this->meshes[index].bboxValues.xMax;
+		meshBoundingBox.yMax = this->meshes[index].bboxValues.yMax;
+		meshBoundingBox.zMax = this->meshes[index].bboxValues.zMax;
+
+		// Get mesh bounding box min values
+		meshBoundingBox.xMin = this->meshes[index].bboxValues.xMin;
+		meshBoundingBox.yMin = this->meshes[index].bboxValues.yMin;
+		meshBoundingBox.zMin = this->meshes[index].bboxValues.zMin;
+
+		outASCII << "BBox max values: " << meshBoundingBox.xMax << ", " << meshBoundingBox.yMax << ", " << meshBoundingBox.zMax << endl;
+		outASCII << "BBox min values: " << meshBoundingBox.xMin << ", " << meshBoundingBox.yMin << ", " << meshBoundingBox.zMin << endl;
+
 		// Write the mesh transformation to the binary file
 		outBinary.write(reinterpret_cast<char*>(meshTransformations.data()), sizeof(meshTransformations[0]) * meshTransformations.size());
+
+		// Write the mesh bounding box data to the binary file
+		outBinary.write(reinterpret_cast<char*>(&meshBoundingBox), sizeof(BBox));
 
 		// Materia header defined for the material attributes of the current mesh
 		vector<XMFLOAT4>materialAttributes;
