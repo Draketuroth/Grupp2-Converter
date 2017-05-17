@@ -226,7 +226,9 @@ void FBXConverter::LoadMeshes(FbxNode* pFbxRootNode, FbxManager* gFbxSdkManager,
 					<< meshes[i].rotation.z << "}\nScale: {"
 					<< meshes[i].meshScale.x << ", "
 					<< meshes[i].meshScale.y << ", "
-					<< meshes[i].meshScale.z << "}\nVertices: "
+					<< meshes[i].meshScale.z << "}\nBounding Box: \n"
+					<< "xMax: " << meshes[i].bboxValues.xMax << " yMax : " << meshes[i].bboxValues.yMax << " zMax: " << meshes[i].bboxValues.zMax << "\n"
+					<< "xMin: " << meshes[i].bboxValues.xMin << " yMin : " << meshes[i].bboxValues.yMin << " zMin: " << meshes[i].bboxValues.zMin << "\nVertices: "
 					<< meshes[i].controlPoints.size() << "\n\nMaterial: "
 					<< meshes[i].objectMaterial.materialName.c_str() << "\nType: "
 
