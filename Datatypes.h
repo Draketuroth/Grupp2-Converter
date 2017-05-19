@@ -37,7 +37,7 @@ struct VertexBlendInfo {
 
 struct Keyframe { // Stores the attributes of a keyframe in an animation
 
-	FbxAMatrix LocalTransform;
+	FbxAMatrix GlobalTransform;
 	float TimePos;
 	XMFLOAT4 Translation;
 	XMFLOAT4 Scale;
