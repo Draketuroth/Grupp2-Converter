@@ -544,8 +544,11 @@ void FBXConverter::GatherAnimationData(Mesh &pMesh, FbxNode* node, FbxScene* sce
 				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].TimePos = currentTime.GetFrameCount(FbxTime::eFrames24);
 				
 				FbxAMatrix currentTransformOffset = node->EvaluateGlobalTransform(currentTime) * geometryTransform;	// Receives global transformation at time t
-				FbxAMatrix localTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateGlobalTransform(currentTime);
-				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform = localTransform;
+				FbxAMatrix globalTransform = currentTransformOffset.Inverse() * currentCluster->GetLink()->EvaluateGlobalTransform(currentTime);
+				pMesh.skeleton.hierarchy[currentJointIndex].Animations[animIndex].Sequence[i].GlobalTransform = globalTransform;
+
+				/*FbxAnimCurve* translationCurveX = currentCluster->GetLink()->LclTranslation.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_X);
+				translationCurveX->Evaluate(currentTime,(int*) i);*/
 
 				// Break down the matrix into its translation, rotation and scale vectors
 
